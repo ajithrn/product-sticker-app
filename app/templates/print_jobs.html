@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Print Jobs</h1>
+{% if print_jobs %}
+    <ul class="list-group">
+        {% for job in print_jobs %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Product:</strong> {{ job.product_name }}<br>
+                <strong>Quantity:</strong> {{ job.quantity }}<br>
+                <strong>Date:</strong> {{ job.print_date }}<br>
+                <strong>Printed By:</strong> {{ job.printed_by }}<br>
+                <strong>Batch Number:</strong> {{ job.batch_number }}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="pagination">
+      {{ pagination.links }}
+    </div>
+    
+{% else %}
+    <p>No print jobs available.</p>
+{% endif %}
+{% endblock %}

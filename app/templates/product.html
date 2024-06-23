@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">{% if product %}Edit Product{% else %}New Product{% endif %}</h1>
+<form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.category_id.label(class="form-label") }}
+        {{ form.category_id(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.rate.label(class="form-label") }}
+        {{ form.rate(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.net_weight.label(class="form-label") }}
+        {{ form.net_weight(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.shelf_life.label(class="form-label") }}
+        {{ form.shelf_life(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.ingredients.label(class="form-label") }}
+        {{ form.ingredients(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.nutritional_facts.label(class="form-label") }}
+        {{ form.nutritional_facts(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.allergen_information.label(class="form-label") }}
+        {{ form.allergen_information(class="form-control") }}
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="Save">
+        {% if product %}
+        <a href="{{ url_for('main.cancel_edit', product_id=product.id, is_duplicate=is_duplicate) }}" class="btn btn-secondary">Cancel</a>
+        {% else %}
+        <a href="{{ url_for('main.list_products') }}" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,14 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+Flask-Bcrypt
+Flask-Migrate
+flask-paginate
+WTForms
+email-validator
+Werkzeug
+python-dotenv
+reportlab
+gunicorn
+livereload

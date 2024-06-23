@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Categories</h1>
+<a href="{{ url_for('main.new_category') }}" class="btn btn-primary mb-4">New Category</a>
+{% if categories %}
+    <ul class="list-group">
+        {% for category in categories %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ category.name }}
+            <div>
+                <a href="{{ url_for('main.edit_category', category_id=category.id) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                <a href="{{ url_for('main.delete_category', category_id=category.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this category?');">Delete</a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {{ pagination.links }}
+{% else %}
+    <p>No categories available.</p>
+{% endif %}
+{% endblock %}

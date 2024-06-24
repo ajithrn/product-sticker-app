@@ -208,7 +208,7 @@ def delete_category(category_id):
 @login_required
 def list_categories():
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    categories_pagination = ProductCategory.query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    categories_pagination = ProductCategory.query.order_by(ProductCategory.id.desc()).paginate(page=page, per_page=PER_PAGE, error_out=False)
     categories = categories_pagination.items
     pagination = Pagination(page=page, total=categories_pagination.total, search=False, per_page=PER_PAGE, css_framework='bootstrap4')
     return render_template('categories.html', categories=categories, pagination=pagination)
@@ -282,7 +282,7 @@ def edit_product(product_id):
 def list_products():
     page = request.args.get(get_page_parameter(), type=int, default=1)
     form = ProductSearchForm()  # Initialize the form
-    products_pagination = Product.query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    products_pagination = Product.query.order_by(Product.id.desc()).paginate(page=page, per_page=PER_PAGE, error_out=False)
     products = products_pagination.items
     pagination = Pagination(page=page, total=products_pagination.total, search=False, per_page=PER_PAGE, css_framework='bootstrap4')
     return render_template('products.html', products=products, pagination=pagination, form=form)
@@ -453,7 +453,7 @@ def print_stickers_for_product(product_id):
 @login_required
 def print_jobs():
     page = request.args.get(get_page_parameter(), type=int, default=1)
-    print_jobs_pagination = PrintJob.query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    print_jobs_pagination = PrintJob.query.order_by(PrintJob.id.desc()).paginate(page=page, per_page=PER_PAGE, error_out=False)
     print_jobs = print_jobs_pagination.items
     pagination = Pagination(page=page, total=print_jobs_pagination.total, search=False, per_page=PER_PAGE, css_framework='bootstrap4')
     return render_template('print_jobs.html', print_jobs=print_jobs, pagination=pagination)

@@ -1,11 +1,17 @@
+import os
+from flask import current_app
 from reportlab.lib.pagesizes import mm
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph
-from reportlab.lib.units import mm as mm_unit
-import os
-from flask import current_app
+import io
+
+if os.name == 'nt':
+    import win32print
+    import win32api
+else:
+    import cups
 
 class Sticker:
     def __init__(self, product_name, rate, mfg_date, exp_date, net_weight, ingredients, nutritional_facts, batch_number, allergen_information):
@@ -20,13 +26,19 @@ class Sticker:
         self.allergen_information = allergen_information
 
 def create_sticker_pdf(stickers, pdf_output, bg_image_path):
-    c = canvas.Canvas(pdf_output, pagesize=(80*mm, 90*mm))
-    bg_image_path = os.path.join(current_app.root_path, 'static', 'images/bg.png')
-    width, height = 80*mm, 90*mm
+    # Custom page size and margins
+    PAGE_WIDTH = 85 * mm
+    PAGE_HEIGHT = 95 * mm
+    MARGIN = 2.5 * mm
+
+    c = canvas.Canvas(pdf_output, pagesize=(PAGE_WIDTH, PAGE_HEIGHT))
     bg_image = ImageReader(bg_image_path)
 
     for sticker in stickers:
-        draw_sticker(c, sticker, width, height, bg_image)
+        c.saveState()
+        c.translate(MARGIN, MARGIN)
+        draw_sticker(c, sticker, PAGE_WIDTH - 2 * MARGIN, PAGE_HEIGHT - 2 * MARGIN, bg_image)
+        c.restoreState()
         c.showPage()
 
     c.save()
@@ -84,18 +96,37 @@ def draw_wrapped_text(c, text, x, y, max_width):
     # Draw the Paragraph
     p.drawOn(c, x, y - h)
 
-def draw_wrapped_text(c, text, x, y, max_width):
-    styles = getSampleStyleSheet()
-    styleN = styles['Normal']
-    styleN.fontName = 'Helvetica'
-    styleN.fontSize = 6
-    styleN.leading = 8
+def print_stickers(stickers):
+    # Create a PDF in memory
+    pdf_output = io.BytesIO()
+    bg_image_path = os.path.join(current_app.root_path, 'static', 'images/bg.png')
+    create_sticker_pdf(stickers, pdf_output, bg_image_path)
+    pdf_output.seek(0)
+    
+    if os.name == 'nt':  # On Windows
+        print_pdf_windows(pdf_output)
+    else:  # On Linux/Mac
+        print_pdf_cups(pdf_output)
 
-    # Create a Paragraph with the text
-    p = Paragraph(text, styleN)
+def print_pdf_windows(pdf_output):
+    printer_name = win32print.GetDefaultPrinter()
+    temp_pdf_path = os.path.join(os.getcwd(), 'temp_stickers.pdf')
+    with open(temp_pdf_path, 'wb') as f:
+        f.write(pdf_output.getvalue())
+    win32api.ShellExecute(
+        0,
+        "print",
+        temp_pdf_path,
+        None,
+        ".",
+        0
+    )
 
-    # Calculate the width and height of the Paragraph
-    w, h = p.wrap(max_width, 100*mm)
-
-    # Draw the Paragraph
-    p.drawOn(c, x, y - h)
+def print_pdf_cups(pdf_output):
+    conn = cups.Connection()
+    printers = conn.getPrinters()
+    default_printer = list(printers.keys())[0]  # Use the first printer found
+    temp_pdf_path = os.path.join(os.getcwd(), 'temp_stickers.pdf')
+    with open(temp_pdf_path, 'wb') as f:
+        f.write(pdf_output.getvalue())
+    conn.printFile(default_printer, temp_pdf_path, "Sticker Print Job", {})

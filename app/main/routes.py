@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, bcrypt
 from app.models import User, Product, ProductCategory, PrintJob
 from app.forms import LoginForm, RegisterForm, ProductForm, PrintForm, ProductSearchForm, CategoryForm, ProfileForm, UserForm
-from app.sticker import create_sticker_pdf, Sticker
+from app.sticker import create_sticker_pdf, Sticker, print_stickers
 import io
 from datetime import datetime, timedelta
 from app.main import main
@@ -348,10 +348,10 @@ def analytics_dashboard():
 
 @main.route('/print', methods=['GET', 'POST'])
 @login_required
-def print_stickers():
+def print_stickers_view():
     form = PrintForm()
     form.product_id.choices = [(p.id, p.name) for p in Product.query.all()]
-    
+
     if request.method == 'POST' and form.validate_on_submit():
         product = Product.query.get(form.product_id.data)
         quantity = form.quantity.data
@@ -376,9 +376,8 @@ def print_stickers():
             for _ in range(quantity)
         ]
 
-        pdf_output = io.BytesIO()
-        create_sticker_pdf(stickers, pdf_output, 'static/bg.png')
-        pdf_output.seek(0)
+        # Print the stickers directly
+        print_stickers(stickers)
 
         print_job = PrintJob(
             product_name=product.name,
@@ -389,7 +388,8 @@ def print_stickers():
         db.session.add(print_job)
         db.session.commit()
 
-        return send_file(pdf_output, as_attachment=True, download_name='stickers.pdf', mimetype='application/pdf')
+        flash('Stickers have been printed successfully!', 'success')
+        return redirect(url_for('main.print_jobs'))
 
     if request.method == 'GET':
         form.mfg_date.data = datetime.now().date()
@@ -427,9 +427,8 @@ def print_stickers_for_product(product_id):
             for _ in range(quantity)
         ]
 
-        pdf_output = io.BytesIO()
-        create_sticker_pdf(stickers, pdf_output, 'static/bg.png')
-        pdf_output.seek(0)
+        # Print the stickers directly
+        print_stickers(stickers)
 
         print_job = PrintJob(
             product_name=product.name,
@@ -440,7 +439,8 @@ def print_stickers_for_product(product_id):
         db.session.add(print_job)
         db.session.commit()
 
-        return send_file(pdf_output, as_attachment=True, download_name='stickers.pdf', mimetype='application/pdf')
+        flash('Stickers have been printed successfully!', 'success')
+        return redirect(url_for('main.print_jobs'))
 
     if request.method == 'GET':
         form.product_id.data = product.id

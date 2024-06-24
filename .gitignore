@@ -27,6 +27,8 @@ env/
 
 # Local configuration
 
+#Temp file before_print. 
+temp_stickers.pdf 
 
 # Unit test / coverage reports
 .coverage

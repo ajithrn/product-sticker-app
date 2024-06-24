@@ -17,7 +17,12 @@
       {% for product in products %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
           {{ product.name }} - ({{ product.category.name }})
-          <a href="{{ url_for('main.edit_product', product_id=product.id) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
+          <div>
+            <a href="{{ url_for('main.print_stickers_for_product', product_id=product.id) }}" class="btn btn-outline-secondary btn-sm">Print Sticker</a>
+            <a href="{{ url_for('main.edit_product', product_id=product.id) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
+            <a href="{{ url_for('main.duplicate_product', product_id=product.id) }}" class="btn btn-outline-secondary btn-sm">Duplicate</a>
+            <a href="{{ url_for('main.delete_product', product_id=product.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
+        </div>
         </li>
       {% endfor %}
     </ul>

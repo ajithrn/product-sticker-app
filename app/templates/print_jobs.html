@@ -2,23 +2,31 @@
 {% block content %}
 <h1 class="mb-4">Print Jobs</h1>
 {% if print_jobs %}
-    <ul class="list-group">
-        {% for job in print_jobs %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-                <strong>Product:</strong> {{ job.product_name }}<br>
-                <strong>Quantity:</strong> {{ job.quantity }}<br>
-                <strong>Date:</strong> {{ job.print_date }}<br>
-                <strong>Printed By:</strong> {{ job.printed_by }}<br>
-                <strong>Batch Number:</strong> {{ job.batch_number }}
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
-    <div class="pagination">
-      {{ pagination.links }}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Date</th>
+                <th>Printed By</th>
+                <th>Batch Number</th> 
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in print_jobs %}
+                <tr>
+                    <td>{{ job.product_name }}</td>
+                    <td>{{ job.quantity }}</td>
+                    <td>{{ job.print_date.strftime('%d %b %Y %H:%M') }}</td> 
+                    <td>{{ job.printed_by }}</td>
+                    <td>{{ job.batch_number }}</td> 
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="d-flex justify-content-center p-3"> 
+        {{ pagination.links }}
     </div>
-    
 {% else %}
     <p>No print jobs available.</p>
 {% endif %}

@@ -15,6 +15,7 @@ def print_jobs():
     """
     View function for listing all print jobs.
     """
+    success_message = request.args.get('success_message')
     page = request.args.get(get_page_parameter(), type=int, default=1)
     print_jobs_pagination = PrintJob.query.order_by(
         PrintJob.id.desc()
@@ -34,5 +35,6 @@ def print_jobs():
     return render_template(
         'print_jobs.html',
         print_jobs=print_jobs,
-        pagination=pagination
+        pagination=pagination,
+        success_message=success_message
     )

@@ -2,7 +2,7 @@
 {% block content %}
 <h1 class="mb-4">Products</h1>
 <a href="{{ url_for('main.new_product') }}" class="btn btn-primary mb-4">New Product</a>
-<form method="POST" action="{{ url_for('main.search_products') }}">
+<form method="POST" action="{{ url_for('main.search_products_post') }}">
     {{ form.hidden_tag() }}
     <div class="form-group">
         {{ form.search.label(class="form-label") }}

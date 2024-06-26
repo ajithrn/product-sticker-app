@@ -1,63 +1,90 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required
 from flask_paginate import Pagination, get_page_parameter
 from datetime import datetime, timedelta
 
 from app import db
-from app.models import Product, ProductCategory, PrintJob
-from app.forms import ProductForm, ProductSearchForm, PrintForm
-from app.sticker import Sticker, print_stickers
+from app.models import Product, ProductCategory
+from app.forms import ProductForm, ProductSearchForm
 
 from . import main
 
 # Constants for pagination
 PER_PAGE = 10
 
+def generate_batch_number(product_name):
+    """
+    Helper function to generate a batch number for a product.
+    The batch number now includes the hour.
+    """
+    initials = ''.join([word[0] for word in product_name.split()]).upper()
+    date_str = datetime.now().strftime('%d%m%y%H')  
+    return f'B{initials}{date_str}'
+
 @main.route('/products', methods=['GET'])
 @login_required
 def list_products():
     """
     View function for listing all products.
+    Handles AJAX search and regular page display with table layout.
     """
     page = request.args.get(get_page_parameter(), type=int, default=1)
     form = ProductSearchForm()
-    products_pagination = Product.query.order_by(
-        Product.id.desc()
-    ).paginate(
-        page=page,
-        per_page=PER_PAGE,
-        error_out=False
-    )
-    products = products_pagination.items
-    pagination = Pagination(
-        page=page,
-        total=products_pagination.total,
-        search=False,
-        per_page=PER_PAGE,
-        css_framework='bootstrap4'
-    )
-    return render_template(
-        'products.html',
-        products=products,
-        pagination=pagination,
-        form=form
-    )
+
+    search_term = request.args.get('q') 
+
+    if search_term is not None:  # Check if search_term is provided
+        # AJAX search request
+        if search_term:  # Check if search_term is not empty
+            products = Product.query.filter(Product.name.ilike(f'%{search_term}%')).all()
+            return jsonify([{'id': p.id, 'name': p.name, 'category': p.category.name} for p in products])
+        else:
+            # Empty search term, return empty JSON array
+            return jsonify([])  
+    else:
+        # Regular product listing with pagination
+        products_pagination = Product.query.order_by(
+            Product.id.desc()
+        ).paginate(
+            page=page,
+            per_page=PER_PAGE,
+            error_out=False
+        )
+        products = products_pagination.items
+        pagination = Pagination(
+            page=page,
+            total=products_pagination.total,
+            search=False,
+            per_page=PER_PAGE,
+            css_framework='bootstrap4'
+        )
+        return render_template(
+            'products.html',
+            products=products,
+            pagination=pagination,
+            form=form
+        )
 
 
-@main.route('/search_products', methods=['POST'])
+@main.route('/search_products', methods=['GET', 'POST']) 
 @login_required
-def search_products():
+def search_products_post():
     """
-    View function for searching for products.
+    Handles both GET (for AJAX) and POST requests for product search.
+    Includes shelf life in the response for AJAX.
     """
     form = ProductSearchForm()
-    if form.validate_on_submit():
-        search_term = form.search.data
-        products = Product.query.filter(
-            Product.name.ilike(f'%{search_term}%')
-        ).all()
-        return render_template('search.html', products=products, form=form)
-    return redirect(url_for('main.list_products'))
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            search_term = form.search.data
+            return redirect(url_for('main.list_products', q=search_term))
+        return redirect(url_for('main.list_products'))
+    elif request.method == 'GET':
+        search_term = request.args.get('q')
+        if search_term:
+            products = Product.query.filter(Product.name.ilike(f'%{search_term}%')).all()
+            return jsonify([{'id': p.id, 'name': p.name, 'shelf_life': p.shelf_life} for p in products])
+        return jsonify([])
 
 
 @main.route('/product/new', methods=['GET', 'POST'])
@@ -181,123 +208,3 @@ def cancel_edit(product_id, is_duplicate):
         db.session.commit()
         flash('Duplicate product discarded.', 'info')
     return redirect(url_for('main.list_products'))
-
-
-def generate_batch_number(product_name):
-    """
-    Helper function to generate a batch number for a product.
-    """
-    initials = ''.join([word[0] for word in product_name.split()]).upper()
-    date_str = datetime.now().strftime('%d%m%y%H')
-    return f'B{initials}{date_str}'
-
-
-@main.route('/print', methods=['GET', 'POST'])
-@login_required
-def print_stickers_view():
-    """
-    View function for printing stickers.
-    """
-    form = PrintForm()
-    form.product_id.choices = [(p.id, p.name) for p in Product.query.all()]
-
-    if request.method == 'POST' and form.validate_on_submit():
-        product = Product.query.get(form.product_id.data)
-        quantity = form.quantity.data
-
-        mfg_date = form.mfg_date.data or datetime.now().date()
-        exp_date = form.exp_date.data or mfg_date + timedelta(days=product.shelf_life)
-
-        batch_number = generate_batch_number(product.name)
-
-        stickers = [
-            Sticker(
-                product_name=product.name,
-                rate=product.rate,
-                mfg_date=mfg_date,
-                exp_date=exp_date,
-                net_weight=product.net_weight,
-                ingredients=product.ingredients,
-                nutritional_facts=product.nutritional_facts,
-                batch_number=batch_number,
-                allergen_information=product.allergen_information
-            )
-            for _ in range(quantity)
-        ]
-
-        # Print the stickers directly
-        print_stickers(stickers)
-
-        print_job = PrintJob(
-            product_name=product.name,
-            quantity=quantity,
-            printed_by=current_user.username,
-            batch_number=batch_number,
-        )
-        db.session.add(print_job)
-        db.session.commit()
-
-        flash('Stickers have been printed successfully!', 'success')
-        return redirect(url_for('main.print_jobs'))
-
-    if request.method == 'GET':
-        form.mfg_date.data = datetime.now().date()
-        form.exp_date.data = None
-
-    return render_template('print.html', form=form)
-
-
-@main.route('/print/<int:product_id>', methods=['GET', 'POST'])
-@login_required
-def print_stickers_for_product(product_id):
-    """
-    View function for printing stickers for a specific product.
-    """
-    form = PrintForm()
-    product = Product.query.get(product_id)
-    form.product_id.choices = [(product.id, product.name)]
-
-    if request.method == 'POST' and form.validate_on_submit():
-        quantity = form.quantity.data
-
-        mfg_date = form.mfg_date.data or datetime.now().date()
-        exp_date = form.exp_date.data or mfg_date + timedelta(days=product.shelf_life)
-
-        batch_number = generate_batch_number(product.name)
-
-        stickers = [
-            Sticker(
-                product_name=product.name,
-                rate=product.rate,
-                mfg_date=mfg_date,
-                exp_date=exp_date,
-                net_weight=product.net_weight,
-                ingredients=product.ingredients,
-                nutritional_facts=product.nutritional_facts,
-                batch_number=batch_number,
-                allergen_information=product.allergen_information
-            )
-            for _ in range(quantity)
-        ]
-
-        # Print the stickers directly
-        print_stickers(stickers)
-
-        print_job = PrintJob(
-            product_name=product.name,
-            quantity=quantity,
-            printed_by=current_user.username,
-            batch_number=batch_number,
-        )
-        db.session.add(print_job)
-        db.session.commit()
-
-        flash('Stickers have been printed successfully!', 'success')
-        return redirect(url_for('main.print_jobs'))
-
-    if request.method == 'GET':
-        form.product_id.data = product.id
-        form.mfg_date.data = datetime.now().date()
-        form.exp_date.data = datetime.now().date() + timedelta(days=product.shelf_life)
-
-    return render_template('print.html', form=form)

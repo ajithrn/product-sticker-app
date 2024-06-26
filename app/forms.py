@@ -54,12 +54,23 @@ class ProductForm(FlaskForm):
     allergen_information = TextAreaField('Allergen Information', validators=[DataRequired()])
     submit = SubmitField('Save')
 
-class PrintForm(FlaskForm):
+class SingleProductPrintForm(FlaskForm):
+    """
+    Form for printing stickers for a single product.
+    """
     product_id = SelectField('Product', coerce=int, validators=[DataRequired()])
     mfg_date = DateField('Manufacturing Date', validators=[DataRequired()])
     exp_date = DateField('Expiry Date', validators=[DataRequired()])
     quantity = IntegerField('Number of Stickers', validators=[DataRequired()])
     submit = SubmitField('Print')
+
+class PrintForm(FlaskForm):
+    product_search = StringField('Product Search')  # AJAX search field
+    mfg_date = DateField('Manufacturing Date')
+    exp_date = DateField('Expiry Date')
+    quantity = IntegerField('Number of Stickers per Product', validators=[DataRequired()])
+    add_product = SubmitField('Add Product')
+    print_stickers = SubmitField('Print Stickers')
 
 class ProductSearchForm(FlaskForm):
     search = StringField('Search', validators=[DataRequired()])

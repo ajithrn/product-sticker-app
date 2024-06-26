@@ -10,7 +10,8 @@ This is a web application for managing food products and printing stickers for t
 ## Features
 - User authentication (register, login, logout)
 - Product and category management with pagination
-- Sticker printing
+- Individual sticker printing from product page
+- Multi-product sticker printing with AJAX search, inline editing, and batch printing.
 - Analytics dashboard
 - User management (Store Admin and Staff roles)
 - Profile management

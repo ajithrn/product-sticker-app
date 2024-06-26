@@ -12,5 +12,3 @@ python-dotenv
 reportlab
 gunicorn
 livereload
-pywin32
-pycups

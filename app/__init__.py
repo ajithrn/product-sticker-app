@@ -4,6 +4,10 @@ from flask_login import LoginManager, current_user
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load environment variables from .env file
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -36,27 +40,30 @@ def create_app():
 
     @app.before_request
     def before_request_func():
+        """
+        Create the super admin user if it doesn't exist and the flag is not set.
+        """
         global admin_initialized
         if not admin_initialized:
-            with app.app_context():
-                admin = User.query.filter_by(role='store_admin').first()
-                if not admin:
-                    print("No admin user found. Please create an admin user.")
-                    from getpass import getpass
+            admin_username = os.getenv('SUPER_ADMIN_USERNAME')
+            admin_email = os.getenv('SUPER_ADMIN_EMAIL', 'admin@example.com')
+            admin_password = os.getenv('SUPER_ADMIN_PASSWORD')
 
-                    admin_username = input('Enter admin username: ')
-                    admin_email = input('Enter admin email: ')
-                    admin_password = getpass('Enter admin password: ')
-                    hashed_password = generate_password_hash(admin_password)
-                    new_admin = User(
-                        username=admin_username,
-                        email=admin_email,
-                        password=hashed_password,
-                        role='store_admin'
-                    )
-                    db.session.add(new_admin)
-                    db.session.commit()
-                    print("Admin user created successfully.")
-            admin_initialized = True
+            if not admin_username or not admin_password:
+                raise ValueError("SUPER_ADMIN_USERNAME and SUPER_ADMIN_PASSWORD must be set in .env")
+
+            existing_admin = User.query.filter_by(username=admin_username).first()
+            if not existing_admin:
+                hashed_password = generate_password_hash(admin_password)
+                super_admin = User(
+                    username=admin_username,
+                    email=admin_email,
+                    password=hashed_password,
+                    role='store_admin'
+                )
+                db.session.add(super_admin)
+                db.session.commit()
+                print("Super admin user created successfully.")
+            admin_initialized = True # Set flag to True after first execution
 
     return app

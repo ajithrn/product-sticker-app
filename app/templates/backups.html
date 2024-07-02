@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Database Backups</h1>
+<form method="POST" action="{{ url_for('backup.manual_create_backup') }}">
+    <button type="submit" class="btn btn-primary mb-3">Create Backup</button>
+</form>
+
+<h2>Automatic Backup Time</h2>
+{% if auto_backup_time %}
+    <p>Current Scheduled Time: {{ auto_backup_time }}</p>
+    <button class="btn btn-secondary mb-3" onclick="document.getElementById('autoBackupForm').style.display='block'; this.style.display='none';">Edit</button>
+{% else %}
+    <p>No automatic backup time set.</p>
+{% endif %}
+
+<form method="POST" action="{{ url_for('backup.set_automatic_backup') }}" id="autoBackupForm" style="display: {% if auto_backup_time %}none{% else %}block{% endif %};">
+    <div class="form-group">
+        <label for="time">Time (HH:MM):</label>
+        <input type="time" id="time" name="time" class="form-control" value="{{ auto_backup_time if auto_backup_time else '' }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary mb-3">Set Automatic Backup</button>
+</form>
+
+{% if backups %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Backup Name</th>
+                <th>Backup Time</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for backup, backup_time in backups %}
+                <tr>
+                    <td>{{ backup }}</td>
+                    <td>{% if backup_time %}{{ backup_time.strftime('%d/%m/%Y %H:%M:%S') }}{% else %}Invalid Timestamp{% endif %}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('backup.restore_backup', backup_name=backup) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Are you sure you want to restore this backup?');">Restore</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('backup.delete_backup', backup_name=backup) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this backup?');">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No backups available.</p>
+{% endif %}
+{% endblock %}

@@ -31,6 +31,9 @@ def create_app():
     from app.main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
+    from app.backups import backup_bp
+    app.register_blueprint(backup_bp, url_prefix='/backup')
+
     # Import User model locally to avoid circular imports
     from app.models import User
 

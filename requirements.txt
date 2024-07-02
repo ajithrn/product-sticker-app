@@ -12,3 +12,6 @@ python-dotenv
 reportlab
 gunicorn
 livereload
+pywin32; platform_system == "Windows"
+pycups; platform_system != "Windows"
+schedule

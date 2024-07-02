@@ -25,6 +25,9 @@ venv/
 ENV/
 env/
 
+#backups
+backups/
+
 # Local configuration
 
 #Temp file before_print. 

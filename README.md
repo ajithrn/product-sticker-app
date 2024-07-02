@@ -6,16 +6,21 @@ This is a web application for managing food products and printing stickers for t
 - View an analytics dashboard with insights on print jobs and product statistics.
 - Manage users with different roles (Store Admin and Staff).
 - Pagination for product, category, print job, and user listings.
+- Manage database backups, including automatic scheduled backups.
 
 ## Features
 - User authentication (register, login, logout)
 - Product and category management with pagination
-- Individual sticker printing from product page
+- Individual sticker printing from the product page
 - Multi-product sticker printing with AJAX search, inline editing, and batch printing.
 - Analytics dashboard
 - User management (Store Admin and Staff roles)
 - Profile management
 - Pagination for products, categories, print jobs, and users
+- Database backup management:
+  - Manual and automatic scheduled backups
+  - View, restore, and delete backups
+  - Store backup logs and settings in a CSV file for reliability
 
 ## Setup Instructions
 
@@ -27,18 +32,21 @@ This is a web application for managing food products and printing stickers for t
 ### Installation
 
 1. **Clone the repository**:
+
    ```sh
    git clone https://github.com/ajithrn/product-sticker-app.git
    cd product-sticker-app
    ```
 
 2. **Create and activate a virtual environment**:
+
    ```sh
    python -m venv venv
    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
    ```
 
 3. **Install the required packages**:
+
    ```sh
    pip install -r requirements.txt
    ```
@@ -48,6 +56,9 @@ This is a web application for managing food products and printing stickers for t
    ```plaintext
    SECRET_KEY=your-secret-key
    DATABASE_URL=sqlite:///your-database.db
+   SUPER_ADMIN_USERNAME=admin
+   SUPER_ADMIN_PASSWORD=admin_password
+   SUPER_ADMIN_EMAIL=admin@example.com
    ```
 
 5. **Initialize the database**:
@@ -63,7 +74,7 @@ This is a web application for managing food products and printing stickers for t
    ```
 
 7. **Open your web browser and navigate to** `http://127.0.0.1:5000/`.
-      
+
 ## Development with Live Reloading
 For live reloading during development, ensure that you set the `FLASK_ENV` environment variable to `development`. The application will automatically watch for changes in your files and reload the browser as needed.
 
@@ -114,6 +125,7 @@ pip install pycups
 - Navigate through the categories, products, and print stickers pages.
 - Use the analytics dashboard to view insights.
 - Store Admin can manage users and assign roles.
+- Manage database backups via the `/backups` route.
 
 ## Technologies Used
 - Flask (Python web framework)
@@ -125,8 +137,9 @@ pip install pycups
 - ReportLab (PDF generation)
 - Flask-Paginate (Pagination)
 - Bootstrap (CSS framework)
-- p0ywin32 (Windows printing)
+- pywin32 (Windows printing)
 - pycups (Linux/Mac printing)
+- schedule (Python library for scheduling tasks)
 - LiveReload (Development live reloading)
 
 ## License

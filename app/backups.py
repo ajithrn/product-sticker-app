@@ -56,6 +56,10 @@ def read_backup_logs():
                     auto_backup_time = row[2]
     return backups, auto_backup_time
 
+def read_auto_backup_time():
+    _, auto_backup_time = read_backup_logs()
+    return auto_backup_time
+
 def set_auto_backup_time(time):
     updated_rows = []
     backup_exists = False
@@ -81,8 +85,8 @@ def set_auto_backup_time(time):
 @backup_bp.route('/backups')
 @login_required
 def list_backups():
-    backups, auto_backup_time = read_backup_logs()
-    return render_template('backups.html', backups=backups, auto_backup_time=auto_backup_time)
+    backups, _ = read_backup_logs()
+    return render_template('backups.html', backups=backups)
 
 @backup_bp.route('/backups/restore/<backup_name>', methods=['POST'])
 @login_required
@@ -123,18 +127,22 @@ def manual_create_backup():
     flash('Backup created successfully.', 'success')
     return redirect(url_for('backup.list_backups'))
 
-@backup_bp.route('/backups/auto', methods=['POST'])
+@backup_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
-def set_automatic_backup():
-    hour, minute = request.form['time'].split(':')
-    schedule.clear()  # Clear existing schedule
-    schedule.every().day.at(f"{hour}:{minute}").do(create_backup)
+def settings():
+    auto_backup_time = read_auto_backup_time()
+    if request.method == 'POST':
+        hour, minute = request.form['time'].split(':')
+        schedule.clear()  # Clear existing schedule
+        schedule.every().day.at(f"{hour}:{minute}").do(create_backup)
 
-    # Store the scheduled time
-    set_auto_backup_time(f"{hour}:{minute}")
+        # Store the scheduled time
+        set_auto_backup_time(f"{hour}:{minute}")
 
-    flash('Automatic backup scheduled.', 'success')
-    return redirect(url_for('backup.list_backups'))
+        flash('Automatic backup scheduled.', 'success')
+        return redirect(url_for('backup.settings'))
+    
+    return render_template('settings.html', auto_backup_time=auto_backup_time)
 
 def run_schedule():
     while True:

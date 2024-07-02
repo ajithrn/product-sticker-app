@@ -5,22 +5,6 @@
     <button type="submit" class="btn btn-primary mb-3">Create Backup</button>
 </form>
 
-<h2>Automatic Backup Time</h2>
-{% if auto_backup_time %}
-    <p>Current Scheduled Time: {{ auto_backup_time }}</p>
-    <button class="btn btn-secondary mb-3" onclick="document.getElementById('autoBackupForm').style.display='block'; this.style.display='none';">Edit</button>
-{% else %}
-    <p>No automatic backup time set.</p>
-{% endif %}
-
-<form method="POST" action="{{ url_for('backup.set_automatic_backup') }}" id="autoBackupForm" style="display: {% if auto_backup_time %}none{% else %}block{% endif %};">
-    <div class="form-group">
-        <label for="time">Time (HH:MM):</label>
-        <input type="time" id="time" name="time" class="form-control" value="{{ auto_backup_time if auto_backup_time else '' }}" required>
-    </div>
-    <button type="submit" class="btn btn-primary mb-3">Set Automatic Backup</button>
-</form>
-
 {% if backups %}
     <table class="table table-striped">
         <thead>

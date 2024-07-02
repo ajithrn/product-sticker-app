@@ -285,6 +285,12 @@
                 'exp_date': row.querySelector('.exp-date').textContent
             });
         });
+        
+        if (selectedProducts.length === 0) {
+            // Show alert if no products are selected
+            alert('No products selected for printing. Please select at least one product.');
+            return; // Stop further execution
+        }
 
         // Send AJAX request to print stickers
         fetch('/print_stickers', {

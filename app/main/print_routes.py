@@ -74,8 +74,7 @@ def print_stickers_for_product(product_id):
             product_name=product.name,
             quantity=quantity,
             printed_by=current_user.username,
-            batch_number=batch_number,
-            product=product
+            batch_number=batch_number
         )
         db.session.add(print_job)
         db.session.commit()
@@ -145,4 +144,4 @@ def print_stickers_route():
 
         return jsonify({'message': 'Stickers printed successfully!'})
 
-    return jsonify({'message': 'No products selected for printing.'})
+    return jsonify({'message': 'No products selected for printing. Please select at least one product.'})

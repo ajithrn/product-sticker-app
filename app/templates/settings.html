@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="mb-4">Settings</h1>
-<form method="POST" action="{{ url_for('backup.settings') }}">
+<form method="POST" action="{{ url_for('main.settings') }}">
     <div class="form-group">
         <label for="time">Automatic Backup Time (HH:MM):</label>
         <input type="time" id="time" name="time" class="form-control" value="{{ auto_backup_time if auto_backup_time else '' }}" required>

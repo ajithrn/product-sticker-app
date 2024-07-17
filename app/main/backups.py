@@ -1,24 +1,26 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from datetime import datetime
+from . import main
+from app import db
 import os
 import shutil
+import csv
+from datetime import datetime
 import schedule
 import time
-import csv
 from threading import Thread
+from dotenv import load_dotenv
 
-backup_bp = Blueprint('backup', __name__)
+# Load environment variables from .env file
+load_dotenv()
 
-# Directories and files
 BACKUP_DIR = os.path.join(os.getcwd(), 'backups')
 BACKUP_LOG_FILE = os.path.join(BACKUP_DIR, 'backup_log.csv')
+DB_NAME = os.getenv('DB_NAME', 'product_sticker_app.db')
 
-# Create the backup directory if it doesn't exist
 if not os.path.exists(BACKUP_DIR):
     os.makedirs(BACKUP_DIR)
 
-# Ensure CSV file exists
 if not os.path.exists(BACKUP_LOG_FILE):
     with open(BACKUP_LOG_FILE, 'w', newline='') as csvfile:
         log_writer = csv.writer(csvfile)
@@ -27,7 +29,7 @@ if not os.path.exists(BACKUP_LOG_FILE):
 def create_backup():
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     backup_filename = f'backup_{timestamp}.db'
-    src = os.path.join(os.getcwd(), 'instance', 'product_sticker_app.db')
+    src = os.path.join(os.getcwd(), 'instance', DB_NAME)
     dest = os.path.join(BACKUP_DIR, backup_filename)
 
     try:
@@ -82,30 +84,29 @@ def set_auto_backup_time(time):
         log_writer = csv.writer(csvfile)
         log_writer.writerows(updated_rows)
 
-@backup_bp.route('/backups')
+@main.route('/backups')
 @login_required
 def list_backups():
     backups, _ = read_backup_logs()
     return render_template('backups.html', backups=backups)
 
-@backup_bp.route('/backups/restore/<backup_name>', methods=['POST'])
+@main.route('/backups/restore/<backup_name>', methods=['POST'])
 @login_required
 def restore_backup(backup_name):
     try:
         src = os.path.join(BACKUP_DIR, backup_name)
-        dest = os.path.join(os.getcwd(), 'instance', 'product_sticker_app.db')
+        dest = os.path.join(os.getcwd(), 'instance', DB_NAME)
         shutil.copyfile(src, dest)
         flash('Backup restored successfully.', 'success')
     except Exception as e:
         flash(f'Error restoring backup: {e}', 'danger')
-    return redirect(url_for('backup.list_backups'))
+    return redirect(url_for('main.list_backups'))
 
-@backup_bp.route('/backups/delete/<backup_name>', methods=['POST'])
+@main.route('/backups/delete/<backup_name>', methods=['POST'])
 @login_required
 def delete_backup(backup_name):
     try:
         os.remove(os.path.join(BACKUP_DIR, backup_name))
-        # Remove the entry from the log
         backups, auto_backup_time = read_backup_logs()
         backups = [backup for backup in backups if backup[0] != backup_name]
         with open(BACKUP_LOG_FILE, 'w', newline='') as csvfile:
@@ -118,16 +119,16 @@ def delete_backup(backup_name):
         flash('Backup deleted successfully.', 'success')
     except Exception as e:
         flash(f'Error deleting backup: {e}', 'danger')
-    return redirect(url_for('backup.list_backups'))
+    return redirect(url_for('main.list_backups'))
 
-@backup_bp.route('/backups/create', methods=['POST'])
+@main.route('/backups/create', methods=['POST'])
 @login_required
 def manual_create_backup():
     create_backup()
     flash('Backup created successfully.', 'success')
-    return redirect(url_for('backup.list_backups'))
+    return redirect(url_for('main.list_backups'))
 
-@backup_bp.route('/settings', methods=['GET', 'POST'])
+@main.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
     auto_backup_time = read_auto_backup_time()
@@ -140,7 +141,7 @@ def settings():
         set_auto_backup_time(f"{hour}:{minute}")
 
         flash('Automatic backup scheduled.', 'success')
-        return redirect(url_for('backup.settings'))
+        return redirect(url_for('main.settings'))
     
     return render_template('settings.html', auto_backup_time=auto_backup_time)
 
@@ -149,6 +150,18 @@ def run_schedule():
         schedule.run_pending()
         time.sleep(1)
 
-# Start the thread for running scheduled tasks
-thread = Thread(target=run_schedule)
-thread.start()
+# Initialize the scheduler
+def init_scheduler(app):
+    auto_backup_time = read_auto_backup_time()
+    if auto_backup_time:
+        schedule.every().day.at(auto_backup_time).do(create_backup)
+        print(f"Scheduled automatic backups at {auto_backup_time}")
+
+    thread = Thread(target=run_schedule)
+    thread.daemon = True
+    thread.start()
+
+# Call this function when the app starts, not during initialization
+def start_scheduler(app):
+    with app.app_context():
+        init_scheduler(app)

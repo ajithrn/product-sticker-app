@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
@@ -31,9 +31,6 @@ def create_app():
     from app.main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
-    from app.backups import backup_bp
-    app.register_blueprint(backup_bp, url_prefix='/backup')
-
     # Import User model locally to avoid circular imports
     from app.models import User
 
@@ -42,10 +39,8 @@ def create_app():
         return User.query.get(int(user_id))
 
     @app.before_request
-    def before_request_func():
-        """
-        Create the super admin user if it doesn't exist and the flag is not set.
-        """
+    def create_super_admin():
+        """Create the super admin user if it doesn't exist."""
         global admin_initialized
         if not admin_initialized:
             admin_username = os.getenv('SUPER_ADMIN_USERNAME')
@@ -67,6 +62,6 @@ def create_app():
                 db.session.add(super_admin)
                 db.session.commit()
                 print("Super admin user created successfully.")
-            admin_initialized = True # Set flag to True after first execution
+            admin_initialized = True  # Set flag to True after first execution
 
     return app

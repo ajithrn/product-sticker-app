@@ -1,6 +1,7 @@
 from app import create_app, db
 from flask_migrate import Migrate
 from app.models import User, Product, PrintJob, ProductCategory
+from app.main.backups import start_scheduler
 from dotenv import load_dotenv
 import os
 
@@ -15,24 +16,20 @@ def make_shell_context():
     return {'db': db, 'User': User, 'Product': Product, 'PrintJob': PrintJob, 'ProductCategory': ProductCategory}
 
 def start_app():
-    # Set environment variables for development
-    if os.getenv('FLASK_ENV') == 'development':
-        app.debug = True
-        # Use environment variable for port or fallback to port 5000
-        port = int(os.environ.get('PORT', 5000))
-        host = '127.0.0.1'
-        # Set up livereload server
+    # Use environment variable for port or fallback to port 5000
+    port = int(os.environ.get('PORT', 5000))
+    host = '0.0.0.0'  # Make the server publicly available
+
+    if app.debug:
+        # Set up livereload server only in debug mode
         from livereload import Server
         server = Server(app.wsgi_app)
-        server.watch('**/*.html')  # Watch all HTML files for changes
-        server.watch('**/*.css')   # Optional: watch CSS files
-        server.watch('**/*.js')    # Optional: watch JS files
+        server.watch('**/*.html')
+        server.watch('**/*.css')
+        server.watch('**/*.js')
         server.serve(port=port, host=host, restart_delay=1)
     else:
-        app.debug = False
-        # Use environment variable for port or fallback to port 5000
-        port = int(os.environ.get('PORT', 5000))
-        app.run(port=port)
+        app.run(port=port, host=host)
 
 if __name__ == '__main__':
     start_app()

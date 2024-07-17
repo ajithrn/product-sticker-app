@@ -45,3 +45,6 @@ temp_stickers.pdf
 
 # VS Code
 .vscode/
+
+# Docker
+.dockerignore

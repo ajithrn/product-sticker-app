@@ -14,6 +14,10 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Determine the backup directory based on the environment
+if os.environ.get('DOCKER_ENV') == 'true':
+    BACKUP_DIR = os.path.join(os.getcwd(), '/app/backups')
+
 BACKUP_DIR = os.path.join(os.getcwd(), 'backups')
 BACKUP_LOG_FILE = os.path.join(BACKUP_DIR, 'backup_log.csv')
 DB_NAME = os.getenv('DB_NAME', 'product_sticker_app.db')

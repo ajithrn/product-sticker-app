@@ -4,29 +4,31 @@ from app.models import User, Product, PrintJob, ProductCategory
 from app.main.backups import start_scheduler
 from dotenv import load_dotenv
 import os
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Load environment variables from .env file
 load_dotenv()
 
-app = create_app()
-migrate = Migrate(app, db)  # Initialize migrate with app and db
+# Create app with the appropriate configuration
+app = create_app(os.getenv('FLASK_ENV') or 'default')
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+migrate = Migrate(app, db)
 
 @app.shell_context_processor
 def make_shell_context():
     return {'db': db, 'User': User, 'Product': Product, 'PrintJob': PrintJob, 'ProductCategory': ProductCategory}
 
 def start_app():
-    # Use environment variable for port or fallback to port 5000
     port = int(os.environ.get('PORT', 5000))
-    host = '0.0.0.0'  # Make the server publicly available
+    host = '0.0.0.0'
 
-    if app.debug:
-        # Set up livereload server only in debug mode
+    # Check both FLASK_ENV and FLASK_DEBUG
+    is_debug = os.getenv('FLASK_ENV') == 'development' or os.getenv('FLASK_DEBUG') == '1'
+
+    if is_debug:
         from livereload import Server
         server = Server(app.wsgi_app)
-        server.watch('**/*.html')
-        server.watch('**/*.css')
-        server.watch('**/*.js')
+        server.watch('**/*.*')
         server.serve(port=port, host=host, restart_delay=1)
     else:
         app.run(port=port, host=host)

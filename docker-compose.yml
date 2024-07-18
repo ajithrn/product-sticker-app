@@ -3,6 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
+    container_name: product_sticker_app
     ports:
       - "5000:5000"
     volumes:
@@ -12,6 +13,7 @@ services:
     environment:
       - DOCKER_ENV=true
       - FLASK_ENV=production
+      - FLASK_DEBUG=0
 
 volumes:
   backup-volume:

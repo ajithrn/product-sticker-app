@@ -61,6 +61,8 @@ This is a web application for managing food products and printing stickers for t
    SUPER_ADMIN_USERNAME=admin
    SUPER_ADMIN_PASSWORD=admin_password
    SUPER_ADMIN_EMAIL=admin@example.com
+   FLASK_ENV=development
+   FLASK_DEBUG=1
    ```
 
 5. **Initialize the database**:

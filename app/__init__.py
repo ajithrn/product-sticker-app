@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
+from config import config
 import os
 
 load_dotenv()  # Load environment variables from .env file
@@ -14,11 +15,11 @@ login_manager = LoginManager()
 bcrypt = Bcrypt()
 migrate = Migrate()
 
-admin_initialized = False  # Flag to ensure initialization runs once
+admin_initialized = False
 
-def create_app():
+def create_app(config_name='default'):
     app = Flask(__name__)
-    app.config.from_object('config.Config')
+    app.config.from_object(config[config_name])
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -50,7 +51,10 @@ def create_app():
             if not admin_username or not admin_password:
                 raise ValueError("SUPER_ADMIN_USERNAME and SUPER_ADMIN_PASSWORD must be set in .env")
 
-            existing_admin = User.query.filter_by(username=admin_username).first()
+            existing_admin = User.query.filter(
+                (User.username == admin_username) | (User.email == admin_email)
+            ).first()
+
             if not existing_admin:
                 hashed_password = generate_password_hash(admin_password)
                 super_admin = User(
@@ -60,8 +64,16 @@ def create_app():
                     role='store_admin'
                 )
                 db.session.add(super_admin)
-                db.session.commit()
-                print("Super admin user created successfully.")
-            admin_initialized = True  # Set flag to True after first execution
+                try:
+                    db.session.commit()
+                    print("Super admin user created successfully.")
+                except IntegrityError:
+                    db.session.rollback()
+                    print("Super admin user already exists.")
+            else:
+                print("Super admin user already exists.")
+            
+            admin_initialized = True
+
 
     return app

@@ -79,3 +79,11 @@ class ProductSearchForm(FlaskForm):
 class CategoryForm(FlaskForm):
     name = StringField('Category Name', validators=[DataRequired()])
     submit = SubmitField('Save')
+
+class StoreInfoForm(FlaskForm):
+    name = StringField('Store Name', validators=[DataRequired(), Length(max=150)])
+    address = TextAreaField('Address', validators=[DataRequired()])
+    phone_number = StringField('Phone Number', validators=[DataRequired(), Length(max=20)])
+    gst_number = StringField('GST Number', validators=[DataRequired(), Length(max=20)])
+    fssai_number = StringField('FSSAI Number', validators=[DataRequired(), Length(max=20)])
+    submit = SubmitField('Save Store Info')

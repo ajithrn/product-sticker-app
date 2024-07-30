@@ -16,6 +16,8 @@ This is a web application for managing food products and printing stickers for t
 - Analytics dashboard
 - User management (Store Admin and Staff roles)
 - Profile management
+- Store Info and Customization Options
+- Auto Backup Options
 - Pagination for products, categories, print jobs, and users
 - Database backup management:
   - Manual and automatic scheduled backups

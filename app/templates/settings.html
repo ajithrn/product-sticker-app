@@ -1,11 +1,41 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="mb-4">Settings</h1>
+
+<h2 class="mb-3">Automatic Backup</h2>
 <form method="POST" action="{{ url_for('main.settings') }}">
+    {{ store_info_form.csrf_token }}
     <div class="form-group">
         <label for="time">Automatic Backup Time (HH:MM):</label>
         <input type="time" id="time" name="time" class="form-control" value="{{ auto_backup_time if auto_backup_time else '' }}" required>
     </div>
-    <button type="submit" class="btn btn-primary mb-3">Set Automatic Backup</button>
+    <button type="submit" name="set_backup_time" class="btn btn-primary mb-3">Set Automatic Backup</button>
+</form>
+
+<h2 class="mb-3">Store Info</h2>
+
+<form method="POST" action="{{ url_for('main.settings') }}">
+    {{ store_info_form.csrf_token }}
+    <div class="form-group">
+        {{ store_info_form.name.label }}
+        {{ store_info_form.name(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ store_info_form.address.label }}
+        {{ store_info_form.address(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ store_info_form.phone_number.label }}
+        {{ store_info_form.phone_number(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ store_info_form.gst_number.label }}
+        {{ store_info_form.gst_number(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ store_info_form.fssai_number.label }}
+        {{ store_info_form.fssai_number(class="form-control") }}
+    </div>
+    <button type="submit" name="store_info_submit" class="btn btn-primary mb-3">Save Store Info</button>
 </form>
 {% endblock %}

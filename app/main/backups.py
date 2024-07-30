@@ -17,8 +17,9 @@ load_dotenv()
 # Determine the backup directory based on the environment
 if os.environ.get('DOCKER_ENV') == 'true':
     BACKUP_DIR = os.path.join(os.getcwd(), '/app/backups')
+else:
+    BACKUP_DIR = os.path.join(os.getcwd(), 'backups')
 
-BACKUP_DIR = os.path.join(os.getcwd(), 'backups')
 BACKUP_LOG_FILE = os.path.join(BACKUP_DIR, 'backup_log.csv')
 DB_NAME = os.getenv('DB_NAME', 'product_sticker_app.db')
 
@@ -131,23 +132,6 @@ def manual_create_backup():
     create_backup()
     flash('Backup created successfully.', 'success')
     return redirect(url_for('main.list_backups'))
-
-@main.route('/settings', methods=['GET', 'POST'])
-@login_required
-def settings():
-    auto_backup_time = read_auto_backup_time()
-    if request.method == 'POST':
-        hour, minute = request.form['time'].split(':')
-        schedule.clear()  # Clear existing schedule
-        schedule.every().day.at(f"{hour}:{minute}").do(create_backup)
-
-        # Store the scheduled time
-        set_auto_backup_time(f"{hour}:{minute}")
-
-        flash('Automatic backup scheduled.', 'success')
-        return redirect(url_for('main.settings'))
-    
-    return render_template('settings.html', auto_backup_time=auto_backup_time)
 
 def run_schedule():
     while True:

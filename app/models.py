@@ -35,3 +35,11 @@ class PrintJob(db.Model):
     printed_by = db.Column(db.String(150), nullable=False)
     print_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     batch_number = db.Column(db.String(150), nullable=False)
+
+class StoreInfo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    address = db.Column(db.Text, nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    gst_number = db.Column(db.String(20), nullable=False)
+    fssai_number = db.Column(db.String(20), nullable=False)

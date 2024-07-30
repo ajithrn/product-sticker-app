@@ -151,20 +151,8 @@ python run.py # Or flask run
 ```
 
 ## PDF Generation and Printing
-Stickers are generated as PDFs with custom dimensions (85mm x 95mm) including margins (2.5mm each side) and sent directly to the printer. Ensure your printer is set up correctly and you have the necessary permissions.
+Stickers are generated as PDFs with custom dimensions (85mm x 95mm) including margins (2.5mm each side) and sent directly to the printer. Ensure your printer is set up correctly and you have the necessary permissions. Generates stickers will open in new tab and users can print from there.
 
-### For Windows:
-Ensure you have `pywin32` installed:
-```sh
-pip install pywin32
-```
-Make sure your default printer is set up in the system settings.
-
-### For Linux/Mac:
-Ensure CUPS is correctly installed and configured, and you have `pycups` installed:
-```sh
-pip install pycups
-```
 
 ## Usage
 - Register a new user account or use the default super admin account.

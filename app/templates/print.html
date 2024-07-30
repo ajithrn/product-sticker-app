@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="mb-4">Print Stickers</h1>
-<form method="POST" action="">
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div id="successMessage" class="alert alert-success" style="display: none;"></div>
+
+<form method="POST" action="" id="printForm">
     {{ form.hidden_tag() }}
     <div class="form-group">
         {{ form.product_id.label(class="form-label") }}
@@ -28,6 +39,8 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     const productSelect = document.querySelector('#product_id');
     const shelfLifeMapping = {};
+    const successMessage = document.getElementById('successMessage');
+    let stickersGenerated = false;
 
     // Fetch the shelf life data for each product
     fetch('/products')
@@ -60,6 +73,49 @@ document.addEventListener('DOMContentLoaded', (event) => {
     productSelect.addEventListener('change', calculateExpDate);
     mfgDateField.addEventListener('change', calculateExpDate);
     mfgDateField.addEventListener('input', calculateExpDate);
+
+    // Handle form submission
+    const form = document.getElementById('printForm');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.pdf_url) {
+                // Open the PDF in a new tab
+                window.open(data.pdf_url, '_blank');
+                // Show success message
+                successMessage.textContent = "Stickers have been generated successfully!";
+                successMessage.style.display = 'block';
+                // Scroll to the top of the page to show the message
+                window.scrollTo(0, 0);
+                // Set stickersGenerated to true
+                stickersGenerated = true;
+            }
+        })
+        .catch(error => {
+            console.error('Error generating stickers:', error);
+            alert('An error occurred while generating the stickers.');
+        });
+    });
+
+    // Function to redirect to print history page
+    const redirectToPrintHistory = () => {
+        window.location.href = '/products';
+    };
+
+    // Add click event listener to the document
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && stickersGenerated) {
+            setTimeout(redirectToPrintHistory, 3000);
+        }
+    });
 });
 </script>
 {% endblock %}

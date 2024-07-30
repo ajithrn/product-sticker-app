@@ -7,13 +7,6 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph
-import io
-
-if os.name == 'nt':
-    import win32print
-    import win32api
-else:
-    import cups
 
 class Sticker:
     def __init__(self, product_name, rate, mfg_date, exp_date, net_weight, ingredients, nutritional_facts, batch_number, allergen_information):
@@ -109,37 +102,9 @@ def draw_wrapped_text(c, text, x, y, max_width, font_size, bold=False):  # Add f
     # Draw the Paragraph
     p.drawOn(c, x, y - h)
 
-def print_stickers(stickers):
-    # Create a PDF in memory
-    pdf_output = io.BytesIO()
+def create_stickers_pdf(stickers):
+    # Create a PDF file in the root directory
+    pdf_path = os.path.join(current_app.root_path, '..', 'stickers_to_print.pdf')
     bg_image_path = os.path.join(current_app.root_path, 'static', 'images/bg.png')
-    create_sticker_pdf(stickers, pdf_output, bg_image_path)
-    pdf_output.seek(0)
-    
-    if os.name == 'nt':  # On Windows
-        print_pdf_windows(pdf_output)
-    else:  # On Linux/Mac
-        print_pdf_cups(pdf_output)
-
-def print_pdf_windows(pdf_output):
-    printer_name = win32print.GetDefaultPrinter()
-    temp_pdf_path = os.path.join(os.getcwd(), 'temp_stickers.pdf')
-    with open(temp_pdf_path, 'wb') as f:
-        f.write(pdf_output.getvalue())
-    win32api.ShellExecute(
-        0,
-        "print",
-        temp_pdf_path,
-        None,
-        ".",
-        0
-    )
-
-def print_pdf_cups(pdf_output):
-    conn = cups.Connection()
-    printers = conn.getPrinters()
-    default_printer = list(printers.keys())[0]  # Use the first printer found
-    temp_pdf_path = os.path.join(os.getcwd(), 'temp_stickers.pdf')
-    with open(temp_pdf_path, 'wb') as f:
-        f.write(pdf_output.getvalue())
-    conn.printFile(default_printer, temp_pdf_path, "Sticker Print Job", {})
+    create_sticker_pdf(stickers, pdf_path, bg_image_path)
+    return pdf_path

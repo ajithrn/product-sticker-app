@@ -1,11 +1,12 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, current_app
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
+import os
 
 from app import db
 from app.models import Product, PrintJob
 from app.forms import SingleProductPrintForm, PrintForm
-from app.sticker import Sticker, print_stickers
+from app.sticker import Sticker, create_stickers_pdf
 
 from . import main
 from .products import generate_batch_number
@@ -67,8 +68,8 @@ def print_stickers_for_product(product_id):
             for _ in range(quantity)
         ]
 
-        # Print the stickers directly
-        print_stickers(stickers)
+        # Create the PDF file
+        pdf_path = create_stickers_pdf(stickers)
 
         print_job = PrintJob(
             product_name=product.name,
@@ -79,8 +80,10 @@ def print_stickers_for_product(product_id):
         db.session.add(print_job)
         db.session.commit()
 
-        flash('Stickers have been printed successfully!', 'success')
-        return redirect(url_for('main.print_jobs'))
+        return jsonify({
+            'message': 'Stickers has been generated successfully!',
+            'pdf_url': url_for('main.sticker_preview')
+        })
 
     if request.method == 'GET':
         form.product_id.data = product.id
@@ -128,7 +131,7 @@ def print_stickers_route():
             # Append the generated stickers to the all_stickers list
             all_stickers.extend(stickers) 
 
-            # Create print job entry in the database (corrected line)
+            # Create print job entry in the database
             print_job = PrintJob(
                 product_name=product.name,
                 quantity=quantity,
@@ -139,9 +142,21 @@ def print_stickers_route():
 
         db.session.commit()
         
-        # Print all stickers at once
-        print_stickers(all_stickers)  
+        # Create PDF for all stickers
+        pdf_path = create_stickers_pdf(all_stickers)
 
-        return jsonify({'message': 'Stickers printed successfully!'})
+        return jsonify({
+            'message': 'Stickers has been generated successfully!',
+            'pdf_url': url_for('main.sticker_preview')
+        })
 
     return jsonify({'message': 'No products selected for printing. Please select at least one product.'})
+
+@main.route('/sticker_preview')
+@login_required
+def sticker_preview():
+    """
+    Serve the generated PDF file inline.
+    """
+    pdf_path = os.path.join(current_app.root_path, '..', 'stickers_to_print.pdf')
+    return send_file(pdf_path, mimetype='application/pdf')

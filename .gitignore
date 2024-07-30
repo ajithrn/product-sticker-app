@@ -31,7 +31,7 @@ backups/
 # Local configuration
 
 #Temp file before_print. 
-temp_stickers.pdf 
+*.pdf 
 
 # Unit test / coverage reports
 .coverage

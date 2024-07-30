@@ -21,6 +21,7 @@ def profile():
     """
     form = ProfileForm()
     if form.validate_on_submit():
+        current_user.name = form.name.data
         current_user.username = form.username.data
         current_user.email = form.email.data
         if form.password.data:

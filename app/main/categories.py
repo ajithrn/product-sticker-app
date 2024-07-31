@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
 
@@ -82,3 +82,36 @@ def delete_category(category_id):
     db.session.commit()
     flash('Category has been deleted!', 'success')
     return redirect(url_for('main.list_categories'))
+
+@main.route('/search_categories')
+@login_required
+def search_categories():
+    """
+    View function for searching categories.
+    This handles AJAX requests to search for categories as the user types into the category field.
+    Returns a JSON response with the matching categories.
+    """
+    search_term = request.args.get('q')
+    if search_term:
+        categories = ProductCategory.query.filter(ProductCategory.name.ilike(f'%{search_term}%')).all()
+        return jsonify([{'id': c.id, 'name': c.name} for c in categories])
+    return jsonify([])
+
+
+@main.route('/add_category', methods=['POST'])
+@login_required
+def add_category():
+    """
+    View function for adding a new category.
+    This handles AJAX requests to add a new category when the user types a category that doesn't exist.
+    Returns a JSON response with the new category's details.
+    """
+    category_name = request.form.get('name')
+    if category_name:
+        category = ProductCategory.query.filter_by(name=category_name).first()
+        if not category:
+            category = ProductCategory(name=category_name)
+            db.session.add(category)
+            db.session.commit()
+            return jsonify({'id': category.id, 'name': category.name})
+    return jsonify({'error': 'Category already exists or name is invalid'}), 400

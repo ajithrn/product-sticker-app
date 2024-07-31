@@ -35,12 +35,12 @@ class ProfileForm(FlaskForm):
 
 class ProductForm(FlaskForm):
     name = StringField('Product Name', validators=[DataRequired()])
-    category_id = SelectField('Category', coerce=int, validators=[DataRequired()])
+    category_id = StringField('Category', validators=[DataRequired()])
     rate = StringField('Rate', validators=[DataRequired()])
     net_weight = StringField('Net Weight (grams)', validators=[DataRequired()])
     shelf_life = IntegerField('Shelf Life (days)', validators=[DataRequired()])
     ingredients = TextAreaField('Ingredients', validators=[DataRequired()])
-    nutritional_facts = TextAreaField('Nutritional Facts', validators=[DataRequired()], default=(
+    nutritional_facts = TextAreaField('Nutritional Facts (Serving Size: 100g)', validators=[DataRequired()], default=(
         "Energy Value:    kcal\n"
         "Protein:         g\n"
         "Carbohydrates:   g\n"

@@ -1,0 +1,11 @@
+/*
+ * styles.css
+ * 
+ * This file contains global styles for the product sticker application.
+ * 
+ * Author: Ajith R N
+ */
+
+.list-group-item {
+  cursor: pointer;
+}

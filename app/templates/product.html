@@ -9,7 +9,13 @@
     </div>
     <div class="form-group">
         {{ form.category_id.label(class="form-label") }}
-        {{ form.category_id(class="form-control") }}
+        <input id="category-search" type="text" name="category_id" class="form-control" autocomplete="off">
+        <ul id="search-results" class="list-group"></ul>
+        <select id="category-select" name="category_id" class="form-control" style="display:none;">
+            {% for category in form.category_id.choices %}
+                <option value="{{ category[0] }}">{{ category[1] }}</option>
+            {% endfor %}
+        </select>
     </div>
     <div class="form-group">
         {{ form.rate.label(class="form-label") }}
@@ -25,15 +31,15 @@
     </div>
     <div class="form-group">
         {{ form.ingredients.label(class="form-label") }}
-        {{ form.ingredients(class="form-control") }}
+        {{ form.ingredients(class="form-control", style="height: 100px;") }}
     </div>
     <div class="form-group">
         {{ form.nutritional_facts.label(class="form-label") }}
-        {{ form.nutritional_facts(class="form-control") }}
+        {{ form.nutritional_facts(class="form-control", style="height: 250px;") }}
     </div>
     <div class="form-group">
         {{ form.allergen_information.label(class="form-label") }}
-        {{ form.allergen_information(class="form-control") }}
+        {{ form.allergen_information(class="form-control", style="height: 100px;") }}
     </div>
     <div class="form-group">
         <input type="submit" class="btn btn-primary" value="Save">
@@ -44,4 +50,80 @@
         {% endif %}
     </div>
 </form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const categoryInput = document.getElementById('category-search');
+    const searchResults = document.getElementById('search-results');
+    const categorySelect = document.getElementById('category-select');
+
+    categoryInput.addEventListener('input', function() {
+      const searchTerm = categoryInput.value;
+      searchResults.innerHTML = '';
+      
+      if (searchTerm) {
+        fetch(`/search_categories?q=${encodeURIComponent(searchTerm)}`)
+          .then(response => response.json())
+          .then(data => {
+            searchResults.innerHTML = '';
+            if (data.length > 0) {
+              data.forEach(category => {
+                const listItem = document.createElement('li');
+                listItem.textContent = category.name;
+                listItem.className = 'list-group-item';
+                listItem.tabIndex = 0;
+                listItem.dataset.categoryId = category.id;
+
+                listItem.addEventListener('click', function() {
+                  categoryInput.value = category.name;
+                  const option = document.createElement('option');
+                  option.value = category.id;
+                  option.textContent = category.name;
+                  categorySelect.appendChild(option);
+                  categorySelect.value = category.id;
+                  searchResults.innerHTML = '';
+                });
+
+                listItem.addEventListener('keydown', function(event) {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    listItem.click();
+                  }
+                });
+
+                searchResults.appendChild(listItem);
+              });
+            } else {
+              const addNewCategory = document.createElement('li');
+              addNewCategory.textContent = `Add new category: "${searchTerm}"`;
+              addNewCategory.className = 'list-group-item list-group-item-action';
+              addNewCategory.tabIndex = 0;
+              addNewCategory.dataset.newCategory = searchTerm;
+
+              addNewCategory.addEventListener('click', function() {
+                const newCategoryName = addNewCategory.dataset.newCategory;
+
+                const newOption = document.createElement('option');
+                newOption.value = newCategoryName;
+                newOption.textContent = newCategoryName;
+                categorySelect.appendChild(newOption);
+                categorySelect.value = newCategoryName;
+                categoryInput.value = newCategoryName;
+                searchResults.innerHTML = '';
+              });
+
+              addNewCategory.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  addNewCategory.click();
+                }
+              });
+
+              searchResults.appendChild(addNewCategory);
+            }
+          });
+      }
+    });
+  });
+</script>
 {% endblock %}

@@ -96,9 +96,15 @@ def new_product():
     form = ProductForm()
     form.category_id.choices = [(c.id, c.name) for c in ProductCategory.query.all()]
     if form.validate_on_submit():
+        category_name = form.category_id.data
+        category = ProductCategory.query.filter_by(name=category_name).first()
+        if not category:
+            category = ProductCategory(name=category_name)
+            db.session.add(category)
+            db.session.commit()
         product = Product(
             name=form.name.data,
-            category_id=form.category_id.data,
+            category_id=category.id,
             rate=form.rate.data,
             net_weight=form.net_weight.data,
             shelf_life=form.shelf_life.data,

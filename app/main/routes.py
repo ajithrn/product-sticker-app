@@ -156,33 +156,23 @@ def sticker_design():
 
     if request.method == 'POST':
         try:
-            design.page_width = float(request.form['page_width'])
-            design.page_height = float(request.form['page_height'])
-            design.page_margin = float(request.form['page_margin'])
-            design.mrp_top = float(request.form['mrp_top'])
-            design.mrp_left = float(request.form['mrp_left'])
-            design.mrp_max_width = float(request.form['mrp_max_width'])
-            design.net_weight_top = float(request.form['net_weight_top'])
-            design.net_weight_left = float(request.form['net_weight_left'])
-            design.net_weight_max_width = float(request.form['net_weight_max_width'])
-            design.mfg_top = float(request.form['mfg_top'])
-            design.mfg_left = float(request.form['mfg_left'])
-            design.mfg_max_width = float(request.form['mfg_max_width'])
-            design.exp_top = float(request.form['exp_top'])
-            design.exp_left = float(request.form['exp_left'])
-            design.exp_max_width = float(request.form['exp_max_width'])
-            design.batch_no_top = float(request.form['batch_no_top'])
-            design.batch_no_left = float(request.form['batch_no_left'])
-            design.batch_no_max_width = float(request.form['batch_no_max_width'])
-            design.ingredients_top = float(request.form['ingredients_top'])
-            design.ingredients_left = float(request.form['ingredients_left'])
-            design.ingredients_max_width = float(request.form['ingredients_max_width'])
-            design.nutritional_facts_top = float(request.form['nutritional_facts_top'])
-            design.nutritional_facts_left = float(request.form['nutritional_facts_left'])
-            design.nutritional_facts_max_width = float(request.form['nutritional_facts_max_width'])
-            design.allergen_info_top = float(request.form['allergen_info_top'])
-            design.allergen_info_left = float(request.form['allergen_info_left'])
-            design.allergen_info_max_width = float(request.form['allergen_info_max_width'])
+            # Update page size
+            design.page_size = {
+                "width": float(request.form['page_size_width']),
+                "height": float(request.form['page_size_height']),
+                "margin": float(request.form['page_size_margin'])
+            }
+
+            # Update positions of various elements
+            element_positions = ['product_name', 'mrp', 'net_weight', 'mfg_date', 'exp_date', 'batch_no', 'ingredients', 'nutritional_facts', 'allergen_info']
+            for element in element_positions:
+                position = {
+                    "top": float(request.form[f'{element}_position_top']),
+                    "left": float(request.form[f'{element}_position_left']),
+                    "max_width": float(request.form[f'{element}_position_max_width'])
+                }
+                setattr(design, f'{element}_position', position)
+
             design.heading_font_size = float(request.form['heading_font_size'])
             design.content_font_size = float(request.form['content_font_size'])
             design.use_bg_image = 'use_bg_image' in request.form

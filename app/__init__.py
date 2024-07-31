@@ -18,7 +18,7 @@ migrate = Migrate()
 admin_initialized = False
 
 def create_app(config_name='default'):
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static', static_url_path='/app/static')
     app.config.from_object(config[config_name])
 
     db.init_app(app)

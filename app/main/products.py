@@ -18,7 +18,7 @@ def generate_batch_number(product_name):
     The batch number now includes the hour.
     """
     initials = ''.join([word[0] for word in product_name.split()]).upper()
-    date_str = datetime.now().strftime('%d%m%y%H')  
+    date_str = datetime.now().strftime('%d%m%H%M')  
     return f'B{initials}{date_str}'
 
 @main.route('/products', methods=['GET'])

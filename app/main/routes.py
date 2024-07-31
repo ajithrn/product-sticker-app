@@ -12,10 +12,8 @@ import os
 from app import db
 from app.models import User, Product, ProductCategory, PrintJob, StoreInfo, StickerDesign
 from app.forms import LoginForm, RegisterForm, StoreInfoForm
-from .backups import read_auto_backup_time, set_auto_backup_time, create_backup
 
 from . import main
-import schedule
 
 def store_admin_required(f):
     @wraps(f)
@@ -103,42 +101,6 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.login'))
 
-@main.route('/settings', methods=['GET', 'POST'])
-@login_required
-@store_admin_required
-def settings():
-    auto_backup_time = read_auto_backup_time()
-    store_info = StoreInfo.query.first()
-    
-    if store_info is None:
-        store_info_form = StoreInfoForm()
-    else:
-        store_info_form = StoreInfoForm(obj=store_info)
-
-    if request.method == 'POST':
-        if 'set_backup_time' in request.form:
-            hour, minute = request.form['time'].split(':')
-            schedule.clear()  # Clear existing schedule
-            schedule.every().day.at(f"{hour}:{minute}").do(create_backup)
-
-            # Store the scheduled time
-            set_auto_backup_time(f"{hour}:{minute}")
-
-            flash('Automatic backup scheduled.', 'success')
-        elif 'store_info_submit' in request.form:
-            if store_info_form.validate_on_submit():
-                if store_info is None:
-                    store_info = StoreInfo()
-                    db.session.add(store_info)
-                store_info_form.populate_obj(store_info)
-                db.session.commit()
-                flash('Store information updated successfully.', 'success')
-            else:
-                flash('Error updating store information. Please check the form.', 'danger')
-        
-        return redirect(url_for('main.settings'))
-    
-    return render_template('settings.html', auto_backup_time=auto_backup_time, store_info_form=store_info_form, store_info=store_info)
 
 @main.route('/sticker-design', methods=['GET', 'POST'])
 @login_required

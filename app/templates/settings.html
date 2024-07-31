@@ -2,40 +2,74 @@
 {% block content %}
 <h1 class="mb-4">Settings</h1>
 
-<h2 class="mb-3">Automatic Backup</h2>
-<form method="POST" action="{{ url_for('main.settings') }}">
-    {{ store_info_form.csrf_token }}
-    <div class="form-group">
-        <label for="time">Automatic Backup Time (HH:MM):</label>
-        <input type="time" id="time" name="time" class="form-control" value="{{ auto_backup_time if auto_backup_time else '' }}" required>
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">Automatic Backup</h2>
+        <p class="mt-2 mb-0 font-italic">Set a time for automatic backups.</p>
     </div>
-    <button type="submit" name="set_backup_time" class="btn btn-primary mb-3">Set Automatic Backup</button>
-</form>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('main.settings') }}">
+            {{ store_info_form.csrf_token }}
+            <div class="form-group">
+                <label for="time">Backup Time (HH:MM):</label>
+                <input type="time" id="time" name="time" class="form-control" value="{{ auto_backup_time if auto_backup_time else '' }}" required>
+            </div>
+            <button type="submit" name="set_backup_time" class="btn btn-primary">Set Automatic Backup</button>
+        </form>
+    </div>
+</div>
 
-<h2 class="mb-3">Store Info</h2>
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">Store Info</h2>
+        <p class="mt-2 mb-0 font-italic">Update the store information.</p>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('main.settings') }}">
+            {{ store_info_form.csrf_token }}
+            <div class="form-group">
+                {{ store_info_form.name.label }}
+                {{ store_info_form.name(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ store_info_form.address.label }}
+                {{ store_info_form.address(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ store_info_form.phone_number.label }}
+                {{ store_info_form.phone_number(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ store_info_form.gst_number.label }}
+                {{ store_info_form.gst_number(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ store_info_form.fssai_number.label }}
+                {{ store_info_form.fssai_number(class="form-control") }}
+            </div>
+            <button type="submit" name="store_info_submit" class="btn btn-primary">Save Store Info</button>
+        </form>
+    </div>
+</div>
 
-<form method="POST" action="{{ url_for('main.settings') }}">
-    {{ store_info_form.csrf_token }}
-    <div class="form-group">
-        {{ store_info_form.name.label }}
-        {{ store_info_form.name(class="form-control") }}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">AI Integration</h2>
+        <p class="mt-2 mb-0 font-italic">Configure your AI API key for integration.</p>
     </div>
-    <div class="form-group">
-        {{ store_info_form.address.label }}
-        {{ store_info_form.address(class="form-control") }}
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('main.settings') }}">
+            {{ store_info_form.csrf_token }}
+            <div class="form-group">
+                <label for="gpt_api_key">GPT-3.5 API Key:</label>
+                <p class="font-italic">
+                    Enter your GPT-3.5 API key
+                    <a href="https://platform.openai.com/api-keys" target="_blank">here</a> by signing up at the OpenAI website.
+                </p>
+                <input type="text" id="gpt_api_key" name="gpt_api_key" class="form-control" placeholder="Enter your API key" value="{{ partial_api_key if partial_api_key else '' }}" required>
+            </div>
+            <button type="submit" name="set_gpt_key" class="btn btn-primary">Save API Key</button>
+        </form>
     </div>
-    <div class="form-group">
-        {{ store_info_form.phone_number.label }}
-        {{ store_info_form.phone_number(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ store_info_form.gst_number.label }}
-        {{ store_info_form.gst_number(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ store_info_form.fssai_number.label }}
-        {{ store_info_form.fssai_number(class="form-control") }}
-    </div>
-    <button type="submit" name="store_info_submit" class="btn btn-primary mb-3">Save Store Info</button>
-</form>
+</div>
 {% endblock %}

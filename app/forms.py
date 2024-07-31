@@ -82,8 +82,8 @@ class CategoryForm(FlaskForm):
 
 class StoreInfoForm(FlaskForm):
     name = StringField('Store Name', validators=[DataRequired(), Length(max=150)])
-    address = TextAreaField('Address', validators=[DataRequired()])
-    phone_number = StringField('Phone Number', validators=[DataRequired(), Length(max=20)])
-    gst_number = StringField('GST Number', validators=[DataRequired(), Length(max=20)])
-    fssai_number = StringField('FSSAI Number', validators=[DataRequired(), Length(max=20)])
+    address = TextAreaField('Address', validators=[Optional()])
+    phone_number = StringField('Phone Number', validators=[Optional(), Length(max=20)])
+    gst_number = StringField('GST Number', validators=[Optional(), Length(max=20)])
+    fssai_number = StringField('FSSAI Number', validators=[Optional(), Length(max=20)])
     submit = SubmitField('Save Store Info')

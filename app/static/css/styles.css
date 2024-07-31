@@ -9,3 +9,15 @@
 .list-group-item {
   cursor: pointer;
 }
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-menu > li:hover { 
+  background-color: #f1f1f1; 
+}
+
+.navbar-nav .dropdown-menu {
+  position: absolute;
+}

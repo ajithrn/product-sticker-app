@@ -60,3 +60,8 @@ class StickerDesign(db.Model):
     content_font_size = db.Column(db.Float, nullable=False, default=6.0)
     bg_image = db.Column(db.String(255))
     use_bg_image = db.Column(db.Boolean, default=False)
+
+class Setting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    auto_backup_time = db.Column(db.String(5), nullable=True)
+    gpt_api_key_hash = db.Column(db.String(255), nullable=True)

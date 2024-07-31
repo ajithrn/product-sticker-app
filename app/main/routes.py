@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import (
     login_user,
     login_required,
@@ -7,9 +7,10 @@ from flask_login import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+import os
 
 from app import db
-from app.models import User, Product, ProductCategory, PrintJob, StoreInfo
+from app.models import User, Product, ProductCategory, PrintJob, StoreInfo, StickerDesign
 from app.forms import LoginForm, RegisterForm, StoreInfoForm
 from .backups import read_auto_backup_time, set_auto_backup_time, create_backup
 
@@ -138,3 +139,66 @@ def settings():
         return redirect(url_for('main.settings'))
     
     return render_template('settings.html', auto_backup_time=auto_backup_time, store_info_form=store_info_form, store_info=store_info)
+
+@main.route('/sticker-design', methods=['GET', 'POST'])
+@login_required
+@store_admin_required
+def sticker_design():
+    """
+    View function for the sticker design page.
+    Handles updating the sticker design settings.
+    """
+    design = StickerDesign.query.first()
+    if design is None:
+        design = StickerDesign()
+        db.session.add(design)
+        db.session.commit()
+
+    if request.method == 'POST':
+        try:
+            design.page_width = float(request.form['page_width'])
+            design.page_height = float(request.form['page_height'])
+            design.page_margin = float(request.form['page_margin'])
+            design.mrp_top = float(request.form['mrp_top'])
+            design.mrp_left = float(request.form['mrp_left'])
+            design.mrp_max_width = float(request.form['mrp_max_width'])
+            design.net_weight_top = float(request.form['net_weight_top'])
+            design.net_weight_left = float(request.form['net_weight_left'])
+            design.net_weight_max_width = float(request.form['net_weight_max_width'])
+            design.mfg_top = float(request.form['mfg_top'])
+            design.mfg_left = float(request.form['mfg_left'])
+            design.mfg_max_width = float(request.form['mfg_max_width'])
+            design.exp_top = float(request.form['exp_top'])
+            design.exp_left = float(request.form['exp_left'])
+            design.exp_max_width = float(request.form['exp_max_width'])
+            design.batch_no_top = float(request.form['batch_no_top'])
+            design.batch_no_left = float(request.form['batch_no_left'])
+            design.batch_no_max_width = float(request.form['batch_no_max_width'])
+            design.ingredients_top = float(request.form['ingredients_top'])
+            design.ingredients_left = float(request.form['ingredients_left'])
+            design.ingredients_max_width = float(request.form['ingredients_max_width'])
+            design.nutritional_facts_top = float(request.form['nutritional_facts_top'])
+            design.nutritional_facts_left = float(request.form['nutritional_facts_left'])
+            design.nutritional_facts_max_width = float(request.form['nutritional_facts_max_width'])
+            design.allergen_info_top = float(request.form['allergen_info_top'])
+            design.allergen_info_left = float(request.form['allergen_info_left'])
+            design.allergen_info_max_width = float(request.form['allergen_info_max_width'])
+            design.heading_font_size = float(request.form['heading_font_size'])
+            design.content_font_size = float(request.form['content_font_size'])
+            design.use_bg_image = 'use_bg_image' in request.form
+
+            if 'bg_image' in request.files:
+                bg_image = request.files['bg_image']
+                if bg_image.filename != '':
+                    bg_image.save(os.path.join(current_app.root_path, 'static', 'images', bg_image.filename))
+                    design.bg_image = bg_image.filename
+
+            db.session.commit()
+            flash('Sticker design updated successfully.', 'success')
+        except ValueError:
+            flash('Invalid input. Please ensure all fields contain valid numbers.', 'danger')
+        except Exception as e:
+            flash(f'An error occurred: {str(e)}', 'danger')
+        return redirect(url_for('main.sticker_design'))
+
+    return render_template('sticker_design.html', design=design)

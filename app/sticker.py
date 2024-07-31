@@ -7,6 +7,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph
+from app.models import StickerDesign
 
 class Sticker:
     def __init__(self, product_name, rate, mfg_date, exp_date, net_weight, ingredients, nutritional_facts, batch_number, allergen_information):
@@ -20,15 +21,24 @@ class Sticker:
         self.batch_number = batch_number
         self.allergen_information = allergen_information
 
-def create_sticker_pdf(stickers, pdf_output, bg_image_path):
+def create_sticker_pdf(stickers, pdf_output):
+    # Get the sticker design from the database
+    design = StickerDesign.query.first()
+    if not design:
+        raise ValueError("Sticker design not found in the database")
+
     # Custom page size and margins
-    PAGE_WIDTH = 85 * mm
-    PAGE_HEIGHT = 95 * mm
-    MARGIN = 2.5 * mm
+    PAGE_WIDTH = design.page_width * mm
+    PAGE_HEIGHT = design.page_height * mm
+    MARGIN = design.page_margin * mm
 
     c = canvas.Canvas(pdf_output, pagesize=(PAGE_WIDTH, PAGE_HEIGHT))
-    bg_image_path = os.path.join(current_app.root_path, 'static', 'images/bg.png')
-    bg_image = ImageReader(bg_image_path)
+    
+    if design.use_bg_image and design.bg_image:
+        bg_image_path = os.path.join(current_app.root_path, 'static', 'images', design.bg_image)
+        bg_image = ImageReader(bg_image_path)
+    else:
+        bg_image = None
 
     # Register the custom font
     regular_font_path = os.path.join(current_app.root_path, 'static', 'fonts', 'RobotoCondensed-Regular.ttf')
@@ -37,41 +47,42 @@ def create_sticker_pdf(stickers, pdf_output, bg_image_path):
     for sticker in stickers:
         c.saveState()
         c.translate(MARGIN, MARGIN)
-        draw_sticker(c, sticker, PAGE_WIDTH - 2 * MARGIN, PAGE_HEIGHT - 2 * MARGIN, bg_image)
+        draw_sticker(c, sticker, PAGE_WIDTH - 2 * MARGIN, PAGE_HEIGHT - 2 * MARGIN, bg_image, design)
         c.restoreState()
         c.showPage()
 
     c.save()
 
-def draw_sticker(c, sticker, width, height, bg_image):
-    # Draw the background image
-    c.drawImage(bg_image, 0, 0, width=width, height=height)
+def draw_sticker(c, sticker, width, height, bg_image, design):
+    # Draw the background image if it exists
+    if bg_image:
+        c.drawImage(bg_image, 0, 0, width=width, height=height)
 
     # Convert dates to strings
     mfg_date_str = sticker.mfg_date.strftime('%d-%m-%Y')
     exp_date_str = sticker.exp_date.strftime('%d-%m-%Y')
+    usp_rate     = round(float(sticker.rate) / float(sticker.net_weight), 2)
 
     # Use the custom font that supports ₹ symbol
-    draw_wrapped_text(c, sticker.product_name, 36*mm, height - 42*mm, max_width=30*mm, font_size=8, bold=True)
-    draw_wrapped_text(c, "MRP: ₹" + sticker.rate, 36*mm, height - 47*mm, max_width=30*mm, font_size=6)
-    draw_wrapped_text(c, "Net Weight: " + sticker.net_weight + "g", 36*mm, height - 49.5*mm, max_width=30*mm, font_size=6)
-    draw_wrapped_text(c, "MFG Date: " + mfg_date_str, 36*mm, height - 52*mm, max_width=30*mm, font_size=6)
-    draw_wrapped_text(c, "EXP Date: " + exp_date_str, 36*mm, height - 54.5*mm, max_width=30*mm, font_size=6)
-    draw_wrapped_text(c, "Batch No: " + sticker.batch_number, 36*mm, height - 57*mm, max_width=30*mm, font_size=6)
+    draw_wrapped_text(c, sticker.product_name, design.mrp_left*mm, height - design.mrp_top*mm, max_width=design.mrp_max_width*mm, font_size=design.heading_font_size, bold=True)
+    draw_wrapped_text(c, f"MRP: ₹{sticker.rate}   (₹{usp_rate:.2f}/g)", design.mrp_left*mm, height - (design.mrp_top+5)*mm, max_width=design.mrp_max_width*mm, font_size=design.content_font_size)
+    draw_wrapped_text(c, "Net Weight: " + sticker.net_weight + "g", design.net_weight_left*mm, height - design.net_weight_top*mm, max_width=design.net_weight_max_width*mm, font_size=design.content_font_size)
+    draw_wrapped_text(c, "MFG Date: " + mfg_date_str, design.mfg_left*mm, height - design.mfg_top*mm, max_width=design.mfg_max_width*mm, font_size=design.content_font_size)
+    draw_wrapped_text(c, "EXP Date: " + exp_date_str, design.exp_left*mm, height - design.exp_top*mm, max_width=design.exp_max_width*mm, font_size=design.content_font_size)
+    draw_wrapped_text(c, "Batch No: " + sticker.batch_number, design.batch_no_left*mm, height - design.batch_no_top*mm, max_width=design.batch_no_max_width*mm, font_size=design.content_font_size)
 
     # Nutritional Facts box
     nutritional_lines = sticker.nutritional_facts.split("\n")
-    draw_multiline_text(c, nutritional_lines, 8*mm, height - 50*mm, max_width=30*mm, font_size=6)
+    draw_multiline_text(c, nutritional_lines, design.nutritional_facts_left*mm, height - design.nutritional_facts_top*mm, max_width=design.nutritional_facts_max_width*mm, font_size=design.content_font_size)
 
     # Allergen Information box
     allergen_lines = sticker.allergen_information.split("\n")
-    text_y_position = height - 50*mm - (len(nutritional_lines) * 8)  # Adjusting the height based on nutritional facts
-    draw_multiline_text(c, ["Allergen Information:"], 8*mm, text_y_position, max_width=30*mm, font_size=7, bold=True)
-    draw_multiline_text(c, allergen_lines, 8*mm, text_y_position - 3*mm, max_width=30*mm, font_size=6)
+    draw_multiline_text(c, ["Allergen Info:"], design.allergen_info_left*mm, height - design.allergen_info_top*mm, max_width=design.allergen_info_max_width*mm, font_size=design.heading_font_size, bold=True)
+    draw_multiline_text(c, allergen_lines, design.allergen_info_left*mm, height - (design.allergen_info_top+3)*mm, max_width=design.allergen_info_max_width*mm, font_size=design.content_font_size)
 
     # Ingredients box
     ingredients_lines = sticker.ingredients.split("\n")
-    draw_multiline_text(c, ingredients_lines, 36*mm, height - 68*mm, max_width=40*mm, font_size=6)
+    draw_multiline_text(c, ingredients_lines, design.ingredients_left*mm, height - design.ingredients_top*mm, max_width=design.ingredients_max_width*mm, font_size=design.content_font_size)
 
 def draw_multiline_text(c, lines, x, y, max_width, font_size, bold=False):
     styles = getSampleStyleSheet()
@@ -81,14 +92,14 @@ def draw_multiline_text(c, lines, x, y, max_width, font_size, bold=False):
     if bold:
         styleN.fontWeight = 'bolder'  # Apply bold style
     for line in lines:
-        draw_wrapped_text(c, line, x, y, max_width, font_size)
+        draw_wrapped_text(c, line, x, y, max_width, font_size, bold)
         y -= font_size * 1.2  # Adjust the line spacing as needed
 
-def draw_wrapped_text(c, text, x, y, max_width, font_size, bold=False):  # Add font_size parameter
+def draw_wrapped_text(c, text, x, y, max_width, font_size, bold=False):
     styles = getSampleStyleSheet()
     styleN = styles['Normal']
     styleN.fontName = 'RobotoCondensed'
-    styleN.fontSize = font_size  # Set the font size here
+    styleN.fontSize = font_size
     styleN.leading = 8.5  # Adjust leading for better spacing if needed
     if bold:
         styleN.fontWeight = 'bolder'  # Apply bold style
@@ -105,6 +116,5 @@ def draw_wrapped_text(c, text, x, y, max_width, font_size, bold=False):  # Add f
 def create_stickers_pdf(stickers):
     # Create a PDF file in the root directory
     pdf_path = os.path.join(current_app.root_path, '..', 'stickers_to_print.pdf')
-    bg_image_path = os.path.join(current_app.root_path, 'static', 'images/bg.png')
-    create_sticker_pdf(stickers, pdf_path, bg_image_path)
+    create_sticker_pdf(stickers, pdf_path)
     return pdf_path

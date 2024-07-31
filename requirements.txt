@@ -13,3 +13,4 @@ reportlab
 gunicorn
 livereload
 schedule
+requests

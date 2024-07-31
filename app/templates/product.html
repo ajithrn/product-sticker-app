@@ -29,18 +29,21 @@
         {{ form.shelf_life.label(class="form-label") }}
         {{ form.shelf_life(class="form-control") }}
     </div>
-    <div class="form-group">
+    <div class="form-group mb-30">
         {{ form.ingredients.label(class="form-label") }}
         {{ form.ingredients(class="form-control", style="height: 100px;") }}
-    </div>
-    <div class="form-group">
+        <button type="button" id="auto-generate-ingredients" class="btn btn-sm ai-button ">Auto-generate</button>
+      </div>
+    <div class="form-group mb-30">
         {{ form.nutritional_facts.label(class="form-label") }}
         {{ form.nutritional_facts(class="form-control", style="height: 250px;") }}
-    </div>
-    <div class="form-group">
+        <button type="button" id="auto-generate-nutritional-facts" class="btn btn-sm ai-button">Auto-generate</button>
+      </div>
+    <div class="form-group mb-30">
         {{ form.allergen_information.label(class="form-label") }}
         {{ form.allergen_information(class="form-control", style="height: 100px;") }}
-    </div>
+        <button type="button" id="auto-generate-allergen-info" class="btn btn-sm ai-button">Auto-generate</button>
+      </div>
     <div class="form-group">
         <input type="submit" class="btn btn-primary" value="Save">
         {% if product %}
@@ -122,6 +125,120 @@
               searchResults.appendChild(addNewCategory);
             }
           });
+      }
+    });
+
+    // Helper function to fetch and update fields
+    function fetchAndUpdate(url, updateFields) {
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Data fetched: ', data); // Log the fetched data
+          updateFields.forEach(({ selector, value }) => {
+            const element = document.querySelector(selector);
+            if (element) {
+              element.value = data[value];
+            } else {
+              console.log(`Element with selector ${selector} not found.`);
+            }
+          });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+
+    // Event listener for generating ingredients
+    const ingredientsButton = document.getElementById('auto-generate-ingredients');
+    ingredientsButton.addEventListener('click', function() {
+      const productNameElement = document.querySelector('#name');
+      if (productNameElement) {
+        const productName = productNameElement.value;
+        if (productName) {
+          const url = `/auto_generate_ingredients?product_name=${encodeURIComponent(productName)}`;
+          fetch(url)
+            .then(response => response.json())
+            .then(data => {
+              console.log('Data fetched for ingredients: ', data); // Log the fetched data
+              const ingredientsElement = document.querySelector('#ingredients');
+              if (ingredientsElement) {
+                ingredientsElement.value = data.ingredients;
+              } else {
+                console.error('#ingredients element not found.');
+              }
+            })
+            .catch(error => console.error('Error generating ingredients:', error));
+        } else {
+          alert('Please enter a product name first.');
+        }
+      } else {
+        console.error('#name element not found.');
+      }
+    });
+
+    // Event listener for generating nutritional facts
+    const nutritionalFactsButton = document.getElementById('auto-generate-nutritional-facts');
+    nutritionalFactsButton.addEventListener('click', function() {
+      const ingredientsElement = document.querySelector('#ingredients');
+      if (ingredientsElement) {
+        const ingredients = ingredientsElement.value;
+        if (ingredients) {
+          const url = `/auto_generate_nutritional_facts`;
+          fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ingredients: ingredients })
+          })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Data fetched for nutritional facts: ', data); // Log the fetched data
+              const nutritionalFactsElement = document.querySelector('#nutritional_facts');
+              if (nutritionalFactsElement) {
+                nutritionalFactsElement.value = data.nutritional_facts;
+              } else {
+                console.error('#nutritional_facts element not found.');
+              }
+            })
+            .catch(error => console.error('Error generating nutritional facts:', error));
+        } else {
+          alert('Please enter ingredients first.');
+        }
+      } else {
+        console.error('#ingredients element not found.');
+      }
+    });
+
+    // Event listener for generating allergen info
+    const allergenInfoButton = document.getElementById('auto-generate-allergen-info');
+    allergenInfoButton.addEventListener('click', function() {
+      const ingredientsElement = document.querySelector('#ingredients');
+      if (ingredientsElement) {
+        const ingredients = ingredientsElement.value;
+        if (ingredients) {
+          const url = `/auto_generate_allergen_info`;
+          fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ingredients: ingredients })
+          })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Data fetched for allergen info: ', data); // Log the fetched data
+              const allergenInfoElement = document.querySelector('#allergen_information');
+              if (allergenInfoElement) {
+                allergenInfoElement.value = data.allergen_info;
+              } else {
+                console.error('#allergen_information element not found.');
+              }
+            })
+            .catch(error => console.error('Error generating allergen info:', error));
+        } else {
+          alert('Please enter ingredients first.');
+        }
+      } else {
+        console.error('#ingredients element not found.');
       }
     });
   });

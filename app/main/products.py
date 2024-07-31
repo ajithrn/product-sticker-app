@@ -1,10 +1,14 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required
 from flask_paginate import Pagination, get_page_parameter
 from datetime import datetime, timedelta
+import requests
+import json
+import base64
+from cryptography.fernet import Fernet, InvalidToken
 
 from app import db
-from app.models import Product, ProductCategory
+from app.models import Product, ProductCategory, Setting
 from app.forms import ProductForm, ProductSearchForm
 
 from . import main
@@ -20,6 +24,43 @@ def generate_batch_number(product_name):
     initials = ''.join([word[0] for word in product_name.split()]).upper()
     date_str = datetime.now().strftime('%d%m%H%M')  
     return f'B{initials}{date_str}'
+
+def generate_text(prompt, api_key):
+    """
+    Generate text using OpenAI API with GPT-3.5-turbo.
+    """
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {api_key}'
+    }
+    data = {
+        'model': 'gpt-3.5-turbo',  # specify the GPT-3.5-turbo model here
+        'messages': [{'role': 'user', 'content': prompt}],
+        'max_tokens': 150,
+        'n': 1,
+        'stop': None,
+        'temperature': 0.7
+    }
+    response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, data=json.dumps(data))
+    response.raise_for_status()
+    completion_response = response.json()
+    return completion_response['choices'][0]['message']['content'].strip()
+
+
+def ensure_fernet_key(secret_key):
+    # Ensure secret_key is 32 bytes
+    if len(secret_key) < 32:
+        secret_key += '=' * (32 - len(secret_key))
+    secret_key_bytes = base64.urlsafe_b64encode(secret_key.encode())
+    return Fernet(secret_key_bytes)
+
+def encrypt_key(key):
+    cipher_suite = ensure_fernet_key(current_app.config['SECRET_KEY'])
+    return cipher_suite.encrypt(key.encode()).decode()
+
+def decrypt_key(encrypted_key):
+    cipher_suite = ensure_fernet_key(current_app.config['SECRET_KEY'])
+    return cipher_suite.decrypt(encrypted_key.encode()).decode()
 
 @main.route('/products', methods=['GET'])
 @login_required
@@ -214,3 +255,113 @@ def cancel_edit(product_id, is_duplicate):
         db.session.commit()
         flash('Duplicate product discarded.', 'info')
     return redirect(url_for('main.list_products'))
+
+
+
+@main.route('/auto_generate_ingredients')
+@login_required
+def auto_generate_ingredients():
+    """
+    Route to automatically generate ingredients for a given product name.
+    """
+    product_name = request.args.get('product_name')
+    settings = Setting.query.first()
+
+    if settings and settings.gpt_api_key_hash:
+        try:
+            api_key = decrypt_key(settings.gpt_api_key_hash)
+            if not api_key:
+                return jsonify({'error': 'Decryption failed for API key'}), 500
+        except Exception as e:
+            current_app.logger.error(f"Error during decryption: {str(e)}")
+            return jsonify({'error': 'Server error during API key decryption'}), 500
+    else:
+        return jsonify({'error': 'API key not found in settings'}), 500
+
+    try:
+        # Generate ingredients
+        ingredients_prompt = f"Generate a list of natural ingredients for the product named {product_name}. Enclose any stabilizers or chemicals in brackets. Separate ingredients with commas."
+        ingredients = generate_text(ingredients_prompt, api_key)
+
+        return jsonify({'ingredients': ingredients})
+    except requests.RequestException as e:
+        current_app.logger.error(f"Error during OpenAI API request: {str(e)}")
+        return jsonify({'error': 'API request failed'}), 500
+    except Exception as e:
+        current_app.logger.error(f"Unhandled error: {str(e)}")
+        return jsonify({'error': 'Server error during ingredient generation'}), 500
+
+@main.route('/auto_generate_nutritional_facts', methods=['POST'])
+@login_required
+def auto_generate_nutritional_facts():
+    """
+    Route to automatically generate nutritional facts based on provided ingredients.
+    """
+    ingredients = request.json.get('ingredients')
+    settings = Setting.query.first()
+
+    if settings and settings.gpt_api_key_hash:
+        try:
+            api_key = decrypt_key(settings.gpt_api_key_hash)
+            if not api_key:
+                return jsonify({'error': 'Decryption failed for API key'}), 500
+        except Exception as e:
+            current_app.logger.error(f"Error during decryption: {str(e)}")
+            return jsonify({'error': 'Server error during API key decryption'}), 500
+    else:
+        return jsonify({'error': 'API key not found in settings'}), 500
+
+    try:
+        nutritional_facts_prompt = (
+            f"Given the ingredients: {ingredients}, generate nutritional facts for a serving size of 100g in the following format:\n"
+            "Energy Value:    kcal\n"
+            "Protein:         g\n"
+            "Carbohydrates:   g\n"
+            "Sugars:          g\n"
+            "Total Fat:       g\n"
+            "Saturated Fats:  g\n"
+            "Trans Fats:      g\n"
+            "Cholesterol:     mg\n"
+            "Sodium:          mg"
+        )
+        nutritional_facts = generate_text(nutritional_facts_prompt, api_key)
+
+        return jsonify({'nutritional_facts': nutritional_facts})
+    except requests.RequestException as e:
+        current_app.logger.error(f"Error during OpenAI API request: {str(e)}")
+        return jsonify({'error': 'API request failed'}), 500
+    except Exception as e:
+        current_app.logger.error(f"Unhandled error: {str(e)}")
+        return jsonify({'error': 'Server error during nutritional facts generation'}), 500
+
+@main.route('/auto_generate_allergen_info', methods=['POST'])
+@login_required
+def auto_generate_allergen_info():
+    """
+    Route to automatically generate allergen information based on provided ingredients.
+    """
+    ingredients = request.json.get('ingredients')
+    settings = Setting.query.first()
+
+    if settings and settings.gpt_api_key_hash:
+        try:
+            api_key = decrypt_key(settings.gpt_api_key_hash)
+            if not api_key:
+                return jsonify({'error': 'Decryption failed for API key'}), 500
+        except Exception as e:
+            current_app.logger.error(f"Error during decryption: {str(e)}")
+            return jsonify({'error': 'Server error during API key decryption'}), 500
+    else:
+        return jsonify({'error': 'API key not found in settings'}), 500
+
+    try:
+        allergen_info_prompt = f"Given the ingredients: {ingredients}, generate only allergen information in one sentence."
+        allergen_info = generate_text(allergen_info_prompt, api_key)
+
+        return jsonify({'allergen_info': allergen_info})
+    except requests.RequestException as e:
+        current_app.logger.error(f"Error during OpenAI API request: {str(e)}")
+        return jsonify({'error': 'API request failed'}), 500
+    except Exception as e:
+        current_app.logger.error(f"Unhandled error: {str(e)}")
+        return jsonify({'error': 'Server error during allergen info generation'}), 500

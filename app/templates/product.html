@@ -8,15 +8,16 @@
         {{ form.name(class="form-control") }}
     </div>
     <div class="form-group">
-        {{ form.category_id.label(class="form-label") }}
-        <input id="category-search" type="text" name="category_id" class="form-control" autocomplete="off">
-        <ul id="search-results" class="list-group"></ul>
-        <select id="category-select" name="category_id" class="form-control" style="display:none;">
-            {% for category in form.category_id.choices %}
-                <option value="{{ category[0] }}">{{ category[1] }}</option>
-            {% endfor %}
-        </select>
-    </div>
+      {{ form.category_id.label(class="form-label") }}
+      <input id="category-search" type="text" name="category_id" class="form-control" autocomplete="off"
+            value="{{ form.category_id.data }}">
+      <ul id="search-results" class="list-group"></ul>
+      <select id="category-select" name="category_id" class="form-control" style="display:none;">
+          {% for category in form.category_id.choices %}
+              <option value="{{ category[0] }}">{{ category[1] }}</option>
+          {% endfor %}
+      </select>
+  </div>
     <div class="form-group">
         {{ form.rate.label(class="form-label") }}
         {{ form.rate(class="form-control") }}

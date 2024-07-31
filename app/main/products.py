@@ -168,12 +168,17 @@ def edit_product(product_id):
     """
     product = Product.query.get_or_404(product_id)
     form = ProductForm()
-    form.category_id.choices = [(c.id, c.name) for c in ProductCategory.query.all()]
     is_duplicate = request.args.get('is_duplicate', 'false') == 'true'
 
     if form.validate_on_submit():
+        category_name = form.category_id.data
+        category = ProductCategory.query.filter_by(name=category_name).first()
+        if not category:
+            category = ProductCategory(name=category_name)
+            db.session.add(category)
+            db.session.commit()
         product.name = form.name.data
-        product.category_id = form.category_id.data
+        product.category_id = category.id
         product.rate = form.rate.data
         product.net_weight = form.net_weight.data
         product.shelf_life = form.shelf_life.data
@@ -185,7 +190,7 @@ def edit_product(product_id):
         return redirect(url_for('main.list_products'))
     elif request.method == 'GET':
         form.name.data = product.name
-        form.category_id.data = product.category_id
+        form.category_id.data = ProductCategory.query.get(product.category_id).name
         form.rate.data = product.rate
         form.net_weight.data = product.net_weight
         form.shelf_life.data = product.shelf_life

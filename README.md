@@ -57,7 +57,7 @@ This is a web application for managing food products and printing stickers for t
 4. **Set up the environment variables**:
    Create a `.env` file in the root directory and add the following content:
    ```plaintext
-   SECRET_KEY=your-secret-key
+   SECRET_KEY=your-secret-key #Make sure its length is 32
    DATABASE_URL=sqlite:///instance/product_sticker_app.db
    DB_NAME=product_sticker_app.db
    SUPER_ADMIN_USERNAME=admin

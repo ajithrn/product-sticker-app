@@ -65,7 +65,7 @@ def draw_sticker(c, sticker, width, height, bg_image, design):
 
     # Use the custom font that supports ₹ symbol
     draw_wrapped_text(c, sticker.product_name, design.product_name_position['left']*mm, height - design.product_name_position['top']*mm, max_width=design.product_name_position['max_width']*mm, font_size=design.heading_font_size, bold=True)
-    draw_wrapped_text(c, f"MRP: ₹{sticker.rate}   (₹{usp_rate:.2f}/g)", design.mrp_position['left']*mm, height - (design.mrp_position['top']+5)*mm, max_width=design.mrp_position['max_width']*mm, font_size=design.content_font_size)
+    draw_wrapped_text(c, f"MRP: ₹{sticker.rate}   (₹{usp_rate:.2f}/g)", design.mrp_position['left']*mm, height - (design.mrp_position['top'])*mm, max_width=design.mrp_position['max_width']*mm, font_size=design.content_font_size)
     draw_wrapped_text(c, "Net Weight: " + sticker.net_weight + "g", design.net_weight_position['left']*mm, height - design.net_weight_position['top']*mm, max_width=design.net_weight_position['max_width']*mm, font_size=design.content_font_size)
     draw_wrapped_text(c, "MFG Date: " + mfg_date_str, design.mfg_date_position['left']*mm, height - design.mfg_date_position['top']*mm, max_width=design.mfg_date_position['max_width']*mm, font_size=design.content_font_size)
     draw_wrapped_text(c, "EXP Date: " + exp_date_str, design.exp_date_position['left']*mm, height - design.exp_date_position['top']*mm, max_width=design.exp_date_position['max_width']*mm, font_size=design.content_font_size)

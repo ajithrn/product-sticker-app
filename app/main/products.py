@@ -124,7 +124,7 @@ def search_products_post():
         search_term = request.args.get('q')
         if search_term:
             products = Product.query.filter(Product.name.ilike(f'%{search_term}%')).all()
-            return jsonify([{'id': p.id, 'name': p.name, 'shelf_life': p.shelf_life} for p in products])
+            return jsonify([{'id': p.id, 'name': p.name, 'shelf_life': p.shelf_life, 'category': p.category.name} for p in products])
         return jsonify([])
 
 

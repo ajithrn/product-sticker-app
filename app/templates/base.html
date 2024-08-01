@@ -22,12 +22,17 @@
       </button>
       <div class="collapse navbar-collapse main-navbar" id="navbarNavDropdown">
         <ul class="navbar-nav">
-          {% if current_user.is_authenticated %}
-          <li class="nav-item {% if request.endpoint == 'main.list_categories' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('main.list_categories') }}">Categories</a>
-          </li>
-          <li class="nav-item {% if request.endpoint == 'main.list_products' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('main.list_products') }}">Products</a>
+          {% if current_user.is_authenticated %}          
+          <li class="nav-item dropdown {% if request.endpoint in ['main.list_products', 'main.list_categories', 'main.new_product'] %}active{% endif %}">
+            <a class="nav-link dropdown-toggle" href="{{ url_for('main.list_products') }}" id="productsDropdown" role="button" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              Products
+            </a>
+            <div class="dropdown-menu" aria-labelledby="productsDropdown">
+              <a class="dropdown-item" href="{{ url_for('main.list_products') }}">All Products</a>
+              <a class="dropdown-item" href="{{ url_for('main.new_product') }}">Add New Product</a>
+              <a class="dropdown-item" href="{{ url_for('main.list_categories') }}">Categories</a>
+            </div>
           </li>
           <li class="nav-item {% if request.endpoint == 'main.multi_product_print_view' %}active{% endif %}">
             <a class="nav-link" href="{{ url_for('main.multi_product_print_view') }}">Print Stickers</a>

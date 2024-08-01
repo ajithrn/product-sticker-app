@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="mb-4">{% if product %}Edit Product{% else %}New Product{% endif %}</h1>
-<form method="POST" action="">
+<form id="productForm" method="POST" action="">
     {{ form.hidden_tag() }}
     <div class="form-group">
         {{ form.name.label(class="form-label") }}
@@ -9,15 +9,14 @@
     </div>
     <div class="form-group">
       {{ form.category_id.label(class="form-label") }}
-      <input id="category-search" type="text" name="category_id" class="form-control" autocomplete="off"
-            value="{{ form.category_id.data }}">
+      <input id="category-search" type="text" name="category_id" class="form-control" autocomplete="off" placeholder="Start typing to search or add a category" value="{{ form.category_id.data if form.category_id.data is not none else '' }}">
       <ul id="search-results" class="list-group"></ul>
       <select id="category-select" name="category_id" class="form-control" style="display:none;">
           {% for category in form.category_id.choices %}
               <option value="{{ category[0] }}">{{ category[1] }}</option>
           {% endfor %}
       </select>
-  </div>
+    </div>    
     <div class="form-group">
         {{ form.rate.label(class="form-label") }}
         {{ form.rate(class="form-control") }}
@@ -33,18 +32,19 @@
     <div class="form-group mb-30">
         {{ form.ingredients.label(class="form-label") }}
         {{ form.ingredients(class="form-control", style="height: 100px;") }}
-        <button type="button" id="auto-generate-ingredients" class="btn btn-sm ai-button ">Auto-generate</button>
-      </div>
+        <button type="button" id="auto-generate-ingredients" class="btn btn-sm ai-button">Auto-generate</button>
+    </div>
     <div class="form-group mb-30">
         {{ form.nutritional_facts.label(class="form-label") }}
         {{ form.nutritional_facts(class="form-control", style="height: 250px;") }}
         <button type="button" id="auto-generate-nutritional-facts" class="btn btn-sm ai-button">Auto-generate</button>
-      </div>
+    </div>
     <div class="form-group mb-30">
         {{ form.allergen_information.label(class="form-label") }}
         {{ form.allergen_information(class="form-control", style="height: 100px;") }}
         <button type="button" id="auto-generate-allergen-info" class="btn btn-sm ai-button">Auto-generate</button>
-      </div>
+    </div>
+    <div id="notification" class="alert alert-danger" style="display:none;margin-top: 35px;"></div>
     <div class="form-group">
         <input type="submit" class="btn btn-primary" value="Save">
         {% if product %}
@@ -60,6 +60,7 @@
     const categoryInput = document.getElementById('category-search');
     const searchResults = document.getElementById('search-results');
     const categorySelect = document.getElementById('category-select');
+    const notification = document.getElementById('notification');
 
     categoryInput.addEventListener('input', function() {
       const searchTerm = categoryInput.value;
@@ -134,7 +135,6 @@
       fetch(url)
         .then(response => response.json())
         .then(data => {
-          console.log('Data fetched: ', data); // Log the fetched data
           updateFields.forEach(({ selector, value }) => {
             const element = document.querySelector(selector);
             if (element) {
@@ -150,7 +150,7 @@
     // Event listener for generating ingredients
     const ingredientsButton = document.getElementById('auto-generate-ingredients');
     ingredientsButton.addEventListener('click', function() {
-      const productNameElement = document.querySelector('#name');
+      const productNameElement = document.querySelector('#{{ form.name.id }}');
       if (productNameElement) {
         const productName = productNameElement.value;
         if (productName) {
@@ -158,12 +158,12 @@
           fetch(url)
             .then(response => response.json())
             .then(data => {
-              console.log('Data fetched for ingredients: ', data); // Log the fetched data
-              const ingredientsElement = document.querySelector('#ingredients');
+              console.log('Data fetched for ingredients:', data); // Log the fetched data
+              const ingredientsElement = document.querySelector('#{{ form.ingredients.id }}');
               if (ingredientsElement) {
                 ingredientsElement.value = data.ingredients;
               } else {
-                console.error('#ingredients element not found.');
+                console.error('#{{ form.ingredients.id }} element not found.');
               }
             })
             .catch(error => console.error('Error generating ingredients:', error));
@@ -171,14 +171,14 @@
           alert('Please enter a product name first.');
         }
       } else {
-        console.error('#name element not found.');
+        console.error('#{{ form.name.id }} element not found.');
       }
     });
 
     // Event listener for generating nutritional facts
     const nutritionalFactsButton = document.getElementById('auto-generate-nutritional-facts');
     nutritionalFactsButton.addEventListener('click', function() {
-      const ingredientsElement = document.querySelector('#ingredients');
+      const ingredientsElement = document.querySelector('#{{ form.ingredients.id }}');
       if (ingredientsElement) {
         const ingredients = ingredientsElement.value;
         if (ingredients) {
@@ -192,12 +192,11 @@
           })
             .then(response => response.json())
             .then(data => {
-              console.log('Data fetched for nutritional facts: ', data); // Log the fetched data
-              const nutritionalFactsElement = document.querySelector('#nutritional_facts');
+              const nutritionalFactsElement = document.querySelector('#{{ form.nutritional_facts.id }}');
               if (nutritionalFactsElement) {
                 nutritionalFactsElement.value = data.nutritional_facts;
               } else {
-                console.error('#nutritional_facts element not found.');
+                console.error('#{{ form.nutritional_facts.id }} element not found.');
               }
             })
             .catch(error => console.error('Error generating nutritional facts:', error));
@@ -205,14 +204,14 @@
           alert('Please enter ingredients first.');
         }
       } else {
-        console.error('#ingredients element not found.');
+        console.error('#{{ form.ingredients.id }} element not found.');
       }
     });
 
     // Event listener for generating allergen info
     const allergenInfoButton = document.getElementById('auto-generate-allergen-info');
     allergenInfoButton.addEventListener('click', function() {
-      const ingredientsElement = document.querySelector('#ingredients');
+      const ingredientsElement = document.querySelector('#{{ form.ingredients.id }}');
       if (ingredientsElement) {
         const ingredients = ingredientsElement.value;
         if (ingredients) {
@@ -226,12 +225,11 @@
           })
             .then(response => response.json())
             .then(data => {
-              console.log('Data fetched for allergen info: ', data); // Log the fetched data
-              const allergenInfoElement = document.querySelector('#allergen_information');
+              const allergenInfoElement = document.querySelector('#{{ form.allergen_information.id }}');
               if (allergenInfoElement) {
                 allergenInfoElement.value = data.allergen_info;
               } else {
-                console.error('#allergen_information element not found.');
+                console.error('#{{ form.allergen_information.id }} element not found.');
               }
             })
             .catch(error => console.error('Error generating allergen info:', error));
@@ -239,7 +237,26 @@
           alert('Please enter ingredients first.');
         }
       } else {
-        console.error('#ingredients element not found.');
+        console.error('#{{ form.ingredients.id }} element not found.');
+      }
+    });
+
+    // Form category validation before submission
+    document.getElementById('productForm').addEventListener('submit', function(event) {
+      let isValid = true;
+      let errorMessage = 'Please fill out the required fields:\n\n';
+
+      // Check required fields
+      if (document.querySelector('#category-search').value.trim() === '') {
+        isValid = false;
+        errorMessage += 'Category\n';
+      }
+
+      // If the form is not valid, display the notification and prevent form submission
+      if (!isValid) {
+        notification.textContent = errorMessage;
+        notification.style.display = 'block';
+        event.preventDefault();
       }
     });
   });

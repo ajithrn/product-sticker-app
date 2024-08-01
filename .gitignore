@@ -29,6 +29,8 @@ env/
 backups/
 
 # Local configuration
+images/*
+!images/favicon.*
 
 #Temp file before_print. 
 *.pdf 

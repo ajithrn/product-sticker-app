@@ -41,7 +41,7 @@ def create_sticker_pdf(stickers, pdf_output):
         bg_image = None
 
     # Register the custom font
-    regular_font_path = os.path.join(current_app.root_path, 'static', 'fonts', 'RobotoCondensed-Regular.ttf')
+    regular_font_path = os.path.join(current_app.root_path, 'static', 'fonts', 'RobotoCondensed-Bold.ttf')
     pdfmetrics.registerFont(TTFont('RobotoCondensed', regular_font_path))
 
     for sticker in stickers:

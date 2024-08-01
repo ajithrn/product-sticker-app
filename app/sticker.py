@@ -78,7 +78,7 @@ def draw_sticker(c, sticker, width, height, bg_image, design):
     # Allergen Information box
     allergen_lines = sticker.allergen_information.split("\n")
     draw_multiline_text(c, ["Allergen Info:"], design.allergen_info_position['left']*mm, height - design.allergen_info_position['top']*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.heading_font_size, bold=True)
-    draw_multiline_text(c, allergen_lines, design.allergen_info_position['left']*mm, height - (design.allergen_info_position['top']+3)*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.content_font_size)
+    draw_multiline_text(c, allergen_lines, design.allergen_info_position['left']*mm, height - (design.allergen_info_position['top']+3.5)*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.content_font_size)
 
     # Ingredients box
     ingredients_lines = sticker.ingredients.split("\n")
@@ -93,14 +93,14 @@ def draw_multiline_text(c, lines, x, y, max_width, font_size, bold=False):
         styleN.fontWeight = 'bolder'  # Apply bold style
     for line in lines:
         draw_wrapped_text(c, line, x, y, max_width, font_size, bold)
-        y -= font_size * 1.2  # Adjust the line spacing as needed
+        y -= font_size * 1.15  # Adjust the line spacing as needed
 
 def draw_wrapped_text(c, text, x, y, max_width, font_size, bold=False):
     styles = getSampleStyleSheet()
     styleN = styles['Normal']
     styleN.fontName = 'RobotoCondensed'
     styleN.fontSize = font_size
-    styleN.leading = 8.5  # Adjust leading for better spacing if needed
+    styleN.leading = font_size + 0.7  # Adjust leading for better spacing if needed
     if bold:
         styleN.fontWeight = 'bolder'  # Apply bold style
 

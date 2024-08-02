@@ -19,6 +19,7 @@ This is a web application for managing food products and printing stickers for t
 - Store Info and Customization Options
 - Auto Backup Options
 - Pagination for products, categories, print jobs, and users
+- AI Integration to auto generate Ingredients, Nutritional Facts and Allergen Information
 - Database backup management:
   - Manual and automatic scheduled backups
   - View, restore, and delete backups

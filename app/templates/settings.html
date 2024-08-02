@@ -61,9 +61,9 @@
         <form method="POST" action="{{ url_for('main.settings') }}">
             {{ store_info_form.csrf_token }}
             <div class="form-group">
-                <label for="gpt_api_key">GPT-3.5 API Key:</label>
+                <label for="gpt_api_key">OpenAI API Key:</label>
                 <p class="font-italic">
-                    Enter your GPT-3.5 API key
+                    Enter your OpenAI API key
                     <a href="https://platform.openai.com/api-keys" target="_blank">here</a> by signing up at the OpenAI website.
                 </p>
                 <input type="text" id="gpt_api_key" name="gpt_api_key" class="form-control" placeholder="Enter your API key" value="{{ partial_api_key if partial_api_key else '' }}" required>

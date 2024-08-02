@@ -27,14 +27,14 @@ def generate_batch_number(product_name):
 
 def generate_text(prompt, api_key):
     """
-    Generate text using OpenAI API with GPT-3.5-turbo.
+    Generate text using OpenAI API with GPT-4o mini.
     """
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {api_key}'
     }
     data = {
-        'model': 'gpt-3.5-turbo',  # specify the GPT-3.5-turbo model here
+        'model': 'gpt-4o-mini',  # specify the GPT-4o mini model here
         'messages': [{'role': 'user', 'content': prompt}],
         'max_tokens': 150,
         'n': 1,
@@ -285,7 +285,7 @@ def auto_generate_ingredients():
 
     try:
         # Generate ingredients
-        ingredients_prompt = f"Generate a list of natural ingredients for the product named {product_name}. Enclose any stabilizers or chemicals in brackets. Separate ingredients with commas."
+        ingredients_prompt = f"Generate a list of natural ingredients for the product named {product_name}. Enclose any stabilizers or chemicals in brackets. Separate ingredients with commas. (only give ingredients no other texts)"
         ingredients = generate_text(ingredients_prompt, api_key)
 
         return jsonify({'ingredients': ingredients})
@@ -318,7 +318,7 @@ def auto_generate_nutritional_facts():
 
     try:
         nutritional_facts_prompt = (
-            f"Given the ingredients: {ingredients}, generate nutritional facts for a serving size of 100g in the following format:\n"
+            f"Given the ingredients: {ingredients}, generate nutritional facts for a serving size of 100g in the following format: (strictly follow the format no other texts)\n"
             "Energy Value:    kcal\n"
             "Protein:         g\n"
             "Carbohydrates:   g\n"
@@ -360,7 +360,7 @@ def auto_generate_allergen_info():
         return jsonify({'error': 'API key not found in settings'}), 500
 
     try:
-        allergen_info_prompt = f"Given the ingredients: {ingredients}, generate only allergen information in one sentence."
+        allergen_info_prompt = f"Given the ingredients: {ingredients}, generate only allergen information in one sentence. (only give the allergen substance info no other texts or from which ingredient)"
         allergen_info = generate_text(allergen_info_prompt, api_key)
 
         return jsonify({'allergen_info': allergen_info})

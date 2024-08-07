@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Import/Export Data</h1>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h3>Export Data</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div class="form-group">
+                <label for="export_type">Choose Data to Export</label>
+                <select class="form-control" id="export_type" name="export_type">
+                    <option value="product_categories">Products and Categories</option>
+                    <option value="sticker_design">Sticker Design</option>
+                </select>
+                <button type="submit" name="export" class="btn btn-primary mt-3">Export</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h3>Import Data</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="import_type">Choose Data to Import</label>
+                <select class="form-control" id="import_type" name="import_type">
+                    <option value="product_categories">Products and Categories</option>
+                    <option value="sticker_design">Sticker Design</option>
+                </select>
+                <input type="file" class="form-control-file mt-3" name="file" required>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="auto_generate" name="auto_generate">
+                    <label class="form-check-label" for="auto_generate">
+                        Auto-generate Ingredients, Nutrition Facts, and Allergen Info
+                    </label>
+                </div>
+                <small class="form-text text-muted">
+                    Note: Enabling auto-generate will take longer as it will fetch data from the API, which depends on connection speed.
+                </small>
+                <button type="submit" name="import" class="btn btn-primary mt-3">Import</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

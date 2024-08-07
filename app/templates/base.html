@@ -51,6 +51,7 @@
               {% if current_user.role == 'store_admin' %}
               <a class="dropdown-item" href="{{ url_for('main.user_management') }}">User Management</a>
               <a class="dropdown-item" href="{{ url_for('main.sticker_design') }}">Sticker Design</a>
+              <a class="dropdown-item" href="{{ url_for('main.import_export') }}">Import/Export</a>
               {% endif %}
             </div>
           </li>

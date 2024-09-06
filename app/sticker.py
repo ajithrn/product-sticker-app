@@ -1,4 +1,5 @@
 import os
+import re
 from flask import current_app
 from reportlab.lib.pagesizes import mm
 from reportlab.pdfgen import canvas
@@ -64,8 +65,8 @@ def draw_sticker(c, sticker, width, height, bg_image, design):
     usp_rate     = round(float(sticker.rate) / float(sticker.net_weight), 2)
 
     # Use the custom font that supports ₹ symbol
-    draw_wrapped_text(c, sticker.product_name, design.product_name_position['left']*mm, height - design.product_name_position['top']*mm, max_width=design.product_name_position['max_width']*mm, font_size=design.heading_font_size, bold=True)
-    draw_wrapped_text(c, f"MRP: ₹{sticker.rate}   (₹{usp_rate:.2f}/g)", design.mrp_position['left']*mm, height - (design.mrp_position['top'])*mm, max_width=design.mrp_position['max_width']*mm, font_size=design.content_font_size)
+    draw_wrapped_text(c, sticker.product_name.upper(), design.product_name_position['left']*mm, height - design.product_name_position['top']*mm, max_width=design.product_name_position['max_width']*mm, font_size=design.heading_font_size, bold=True)
+    draw_wrapped_text(c, f"MRP: ₹{sticker.rate}   (₹{usp_rate:.2f}/g)", design.mrp_position['left']*mm, height - (design.mrp_position['top'])*mm, max_width=design.mrp_position['max_width']*mm, font_size=design.mrp_font_size)
     draw_wrapped_text(c, "Net Weight: " + sticker.net_weight + "g", design.net_weight_position['left']*mm, height - design.net_weight_position['top']*mm, max_width=design.net_weight_position['max_width']*mm, font_size=design.content_font_size)
     draw_wrapped_text(c, "MFG Date: " + mfg_date_str, design.mfg_date_position['left']*mm, height - design.mfg_date_position['top']*mm, max_width=design.mfg_date_position['max_width']*mm, font_size=design.content_font_size)
     draw_wrapped_text(c, "EXP Date: " + exp_date_str, design.exp_date_position['left']*mm, height - design.exp_date_position['top']*mm, max_width=design.exp_date_position['max_width']*mm, font_size=design.content_font_size)
@@ -73,16 +74,27 @@ def draw_sticker(c, sticker, width, height, bg_image, design):
 
     # Nutritional Facts box
     nutritional_lines = sticker.nutritional_facts.split("\n")
-    draw_multiline_text(c, nutritional_lines, design.nutritional_facts_position['left']*mm, height - design.nutritional_facts_position['top']*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.content_font_size)
+    if design.print_nutritional_heading:
+        draw_nutritional_heading(c, design.nutritional_heading_text, design.nutritional_facts_position['left']*mm, height - design.nutritional_facts_position['top']*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.nutritional_heading_font_size)
+        draw_multiline_text(c, nutritional_lines, design.nutritional_facts_position['left']*mm, height - (design.nutritional_facts_position['top'] + 4.8)*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.nutritional_facts_font_size)
+    else:
+        draw_multiline_text(c, nutritional_lines, design.nutritional_facts_position['left']*mm, height - design.nutritional_facts_position['top']*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.nutritional_facts_font_size)
 
     # Allergen Information box
     allergen_lines = sticker.allergen_information.split("\n")
-    draw_multiline_text(c, ["Allergen Info:"], design.allergen_info_position['left']*mm, height - design.allergen_info_position['top']*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.heading_font_size, bold=True)
-    draw_multiline_text(c, allergen_lines, design.allergen_info_position['left']*mm, height - (design.allergen_info_position['top']+3.5)*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.content_font_size)
+    if design.print_allergen_heading:
+        draw_wrapped_text(c, design.allergen_heading_text, design.allergen_info_position['left']*mm, height - design.allergen_info_position['top']*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.allergen_heading_font_size)
+        draw_multiline_text(c, allergen_lines, design.allergen_info_position['left']*mm, height - (design.allergen_info_position['top'] + 4.8)*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.allergen_info_font_size)
+    else:
+        draw_multiline_text(c, allergen_lines, design.allergen_info_position['left']*mm, height - design.allergen_info_position['top']*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.allergen_info_font_size)
 
     # Ingredients box
     ingredients_lines = sticker.ingredients.split("\n")
-    draw_multiline_text(c, ingredients_lines, design.ingredients_position['left']*mm, height - design.ingredients_position['top']*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.content_font_size)
+    if design.print_ingredients_heading:
+        draw_wrapped_text(c, design.ingredients_heading_text, design.ingredients_position['left']*mm, height - design.ingredients_position['top']*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.ingredients_heading_font_size)
+        draw_multiline_text(c, ingredients_lines, design.ingredients_position['left']*mm, height - (design.ingredients_position['top'] + 4.8)*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.ingredients_font_size)
+    else:
+        draw_multiline_text(c, ingredients_lines, design.ingredients_position['left']*mm, height - design.ingredients_position['top']*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.ingredients_font_size)
 
 def draw_multiline_text(c, lines, x, y, max_width, font_size, bold=False):
     styles = getSampleStyleSheet()
@@ -112,6 +124,19 @@ def draw_wrapped_text(c, text, x, y, max_width, font_size, bold=False):
 
     # Draw the Paragraph
     p.drawOn(c, x, y - h)
+
+def draw_nutritional_heading(c, text, x, y, max_width, font_size):
+    lines = text.split('\n')
+    if len(lines) != 2:
+        raise ValueError("Nutritional heading must have exactly two lines")
+
+    # Draw the first line (Nutritional Facts) with the larger font size
+    c.setFont('RobotoCondensed', font_size)
+    c.drawString(x, y, lines[0])
+
+    # Draw the second line (Serving size) with the smaller font size
+    c.setFont('RobotoCondensed', font_size - 1.5)
+    c.drawString(x, y - font_size, lines[1])
 
 def create_stickers_pdf(stickers):
     # Create a PDF file in the root directory

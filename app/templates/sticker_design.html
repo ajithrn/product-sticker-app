@@ -72,23 +72,94 @@
 
   <div class="card mb-4">
     <div class="card-header">
-      <h2 class="mb-0">Font Sizes</h2>
-      <p class="mt-2 mb-0 font-italic">Specify the font sizes for headings and content on the sticker.</p>
+      <h2 class="mb-0">Heading Options</h2>
+      <p class="mt-2 mb-0 font-italic">Customize the headings for nutritional facts, allergen information, and ingredients.</p>
     </div>
     <div class="card-body">
-      <div class="row">
-        <div class="col-md-6">
-          <div class="form-group">
-            <label for="heading_font_size">Heading Font Size:</label>
-            <input type="number" step="0.1" class="form-control" id="heading_font_size" name="heading_font_size"
-              value="{{ design.heading_font_size }}" required>
+      {% for heading in ['nutritional', 'allergen', 'ingredients'] %}
+      <h4 class="mt-4 text-uppercase">{{ heading|title }} Heading</h4>
+      <div class="row align-items-center">
+        <div class="col-md-3">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="print_{{ heading }}_heading" name="print_{{ heading }}_heading"
+              {% if design['print_' + heading + '_heading'] %} checked {% endif %}>
+            <label class="custom-control-label" for="print_{{ heading }}_heading">Show</label>
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
-            <label for="content_font_size">Content Font Size:</label>
+            <label for="{{ heading }}_heading_text">Heading Text:</label>
+            {% if heading == 'nutritional' %}
+              <textarea class="form-control" id="{{ heading }}_heading_text" name="{{ heading }}_heading_text"
+                rows="2" placeholder="Nutritional Facts (Approx)&#10;Serving size 100g">{{ design[heading + '_heading_text'] }}</textarea>
+              <small class="form-text text-muted">Enter the heading text and serving size on separate lines. The first line will be larger, and the second line will be small in size".</small>
+            {% else %}
+              <input type="text" class="form-control" id="{{ heading }}_heading_text" name="{{ heading }}_heading_text"
+                value="{{ design[heading + '_heading_text'] }}" placeholder="Enter custom heading text">
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="{{ heading }}_heading_font_size">Font Size:</label>
+            <input type="number" step="0.1" class="form-control" id="{{ heading }}_heading_font_size" name="{{ heading }}_heading_font_size"
+              value="{{ design[heading + '_heading_font_size'] }}" required>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <h2 class="mb-0">Font Sizes</h2>
+      <p class="mt-2 mb-0 font-italic">Specify the font sizes for different elements on the sticker.</p>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="heading_font_size">Default Heading Font Size:</label>
+            <input type="number" step="0.1" class="form-control" id="heading_font_size" name="heading_font_size"
+              value="{{ design.heading_font_size }}" required>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="content_font_size">Default Content Font Size:</label>
             <input type="number" step="0.1" class="form-control" id="content_font_size" name="content_font_size"
               value="{{ design.content_font_size }}" required>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="mrp_font_size">MRP Font Size:</label>
+            <input type="number" step="0.1" class="form-control" id="mrp_font_size" name="mrp_font_size"
+              value="{{ design.mrp_font_size }}" required>
+          </div>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="ingredients_font_size">Ingredients Font Size:</label>
+            <input type="number" step="0.1" class="form-control" id="ingredients_font_size" name="ingredients_font_size"
+              value="{{ design.ingredients_font_size }}" required>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="allergen_info_font_size">Allergen Info Font Size:</label>
+            <input type="number" step="0.1" class="form-control" id="allergen_info_font_size" name="allergen_info_font_size"
+              value="{{ design.allergen_info_font_size }}" required>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="nutritional_facts_font_size">Nutritional Facts Font Size:</label>
+            <input type="number" step="0.1" class="form-control" id="nutritional_facts_font_size" name="nutritional_facts_font_size"
+              value="{{ design.nutritional_facts_font_size }}" required>
           </div>
         </div>
       </div>
@@ -107,9 +178,9 @@
             <label for="bg_image">Upload Background Image:</label>
             <input type="file" class="form-control-file" id="bg_image" name="bg_image">
           </div>
-          <div class="form-check mt-3">
-            <input type="checkbox" class="form-check-input" id="use_bg_image" name="use_bg_image" {% if design.use_bg_image %} checked {% endif %}>
-            <label class="form-check-label" for="use_bg_image">Use Background Image</label>
+          <div class="custom-control custom-switch mt-3">
+            <input type="checkbox" class="custom-control-input" id="use_bg_image" name="use_bg_image" {% if design.use_bg_image %} checked {% endif %}>
+            <label class="custom-control-label" for="use_bg_image">Use Background Image</label>
           </div>
         </div>
         <div class="col-md-6">
@@ -125,4 +196,23 @@
 
   <button type="submit" class="btn btn-primary mt-3">Save Design</button>
 </form>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggles = document.querySelectorAll('.custom-control-input[type="checkbox"]');
+    toggles.forEach(toggle => {
+      toggle.addEventListener('change', function() {
+        const headingTextInput = this.closest('.row').querySelector('textarea, input[type="text"]');
+        const fontSizeInput = this.closest('.row').querySelector('input[type="number"]');
+        headingTextInput.disabled = !this.checked;
+        fontSizeInput.disabled = !this.checked;
+      });
+      // Initialize state
+      toggle.dispatchEvent(new Event('change'));
+    });
+  });
+</script>
 {% endblock %}

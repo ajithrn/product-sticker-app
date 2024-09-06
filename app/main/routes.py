@@ -139,6 +139,18 @@ def sticker_design():
             design.content_font_size = float(request.form['content_font_size'])
             design.use_bg_image = 'use_bg_image' in request.form
 
+            # Update heading options
+            for heading in ['nutritional', 'allergen', 'ingredients']:
+                setattr(design, f'print_{heading}_heading', f'print_{heading}_heading' in request.form)
+                setattr(design, f'{heading}_heading_text', request.form[f'{heading}_heading_text'])
+                setattr(design, f'{heading}_heading_font_size', float(request.form[f'{heading}_heading_font_size']))
+
+            # Update new font size fields
+            design.mrp_font_size = float(request.form['mrp_font_size'])
+            design.ingredients_font_size = float(request.form['ingredients_font_size'])
+            design.allergen_info_font_size = float(request.form['allergen_info_font_size'])
+            design.nutritional_facts_font_size = float(request.form['nutritional_facts_font_size'])
+
             if 'bg_image' in request.files:
                 bg_image = request.files['bg_image']
                 if bg_image.filename != '':

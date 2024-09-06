@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, DateField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, DateField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, Length, ValidationError, Email, EqualTo, Optional
 from app.models import User, ProductCategory
 
@@ -87,3 +87,10 @@ class StoreInfoForm(FlaskForm):
     gst_number = StringField('GST Number', validators=[Optional(), Length(max=20)])
     fssai_number = StringField('FSSAI Number', validators=[Optional(), Length(max=20)])
     submit = SubmitField('Save Store Info')
+
+class StickerDesignForm(FlaskForm):
+    # Existing fields...
+    print_nutritional_heading = BooleanField('Print Nutritional Facts Heading')
+    print_allergen_heading = BooleanField('Print Allergen Information Heading')
+    print_ingredients_heading = BooleanField('Print Ingredients Heading')
+    submit = SubmitField('Save Design')

@@ -17,6 +17,12 @@ migrate = Migrate()
 
 admin_initialized = False
 
+def get_css_version():
+    css_path = os.path.join('app', 'static', 'css', 'styles.css')
+    if os.path.exists(css_path):
+        return str(int(os.path.getmtime(css_path)))
+    return '1'
+
 def create_app(config_name='default'):
     app = Flask(__name__, static_folder='static', static_url_path='/app/static')
     app.config.from_object(config[config_name])
@@ -75,5 +81,8 @@ def create_app(config_name='default'):
             
             admin_initialized = True
 
+    @app.context_processor
+    def inject_css_version():
+        return dict(css_version=get_css_version())
 
     return app

@@ -2,111 +2,114 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>{{ store_info.name if store_info else 'Product Sticker App' }}</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{ store_info.name if store_info else 'Product Sticker App' }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ css_version }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
 </head>
 
 <body>
-  <div class="content-wrapper">
-    <nav class="navbar navbar-expand-lg navbar-dark">
-      <a class="navbar-brand" href="{{ url_for('main.index') }}">{{ store_info.name if store_info else 'Product Sticker
-        App' }}</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
-        aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse main-navbar" id="navbarNavDropdown">
-        <ul class="navbar-nav">
-          {% if current_user.is_authenticated %}          
-          <li class="nav-item dropdown {% if request.endpoint in ['main.list_products', 'main.list_categories', 'main.new_product'] %}active{% endif %}">
-            <a class="nav-link dropdown-toggle" href="{{ url_for('main.list_products') }}" id="productsDropdown" role="button" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
-              Products
-            </a>
-            <div class="dropdown-menu" aria-labelledby="productsDropdown">
-              <a class="dropdown-item" href="{{ url_for('main.list_products') }}">All Products</a>
-              <a class="dropdown-item" href="{{ url_for('main.new_product') }}">Add New Product</a>
-              <a class="dropdown-item" href="{{ url_for('main.list_categories') }}">Categories</a>
+    <div class="content-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">{{ store_info.name if store_info else 'Product
+                Sticker
+                App' }}</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+                aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse main-navbar" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li
+                        class="nav-item dropdown {% if request.endpoint in ['main.list_products', 'main.list_categories', 'main.new_product'] %}active{% endif %}">
+                        <a class="nav-link dropdown-toggle" href="{{ url_for('main.list_products') }}"
+                            id="productsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false">
+                            Products
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="productsDropdown">
+                            <a class="dropdown-item" href="{{ url_for('main.list_products') }}">All Products</a>
+                            <a class="dropdown-item" href="{{ url_for('main.new_product') }}">Add New Product</a>
+                            <a class="dropdown-item" href="{{ url_for('main.list_categories') }}">Categories</a>
+                        </div>
+                    </li>
+                    <li class="nav-item {% if request.endpoint == 'main.multi_product_print_view' %}active{% endif %}">
+                        <a class="nav-link" href="{{ url_for('main.multi_product_print_view') }}">Print Stickers</a>
+                    </li>
+                    <li class="nav-item {% if request.endpoint == 'main.print_jobs' %}active{% endif %}">
+                        <a class="nav-link" href="{{ url_for('main.print_jobs') }}">Print History</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Tools
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="toolsDropdown">
+                            <a class="dropdown-item" href="{{ url_for('main.list_backups') }}">Backups</a>
+                            <a class="dropdown-item" href="{{ url_for('main.analytics_dashboard') }}">Analytics</a>
+                            {% if current_user.role == 'store_admin' %}
+                            <a class="dropdown-item" href="{{ url_for('main.user_management') }}">User Management</a>
+                            <a class="dropdown-item" href="{{ url_for('main.sticker_design') }}">Sticker Design</a>
+                            <a class="dropdown-item" href="{{ url_for('main.import_export') }}">Import/Export</a>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span>{{ current_user.name or current_user.username }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
+                            <a class="dropdown-item" href="{{ url_for('main.profile') }}">Profile</a>
+                            <a class="dropdown-item" href="{{ url_for('main.settings') }}">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('main.logout') }}">Logout</a>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.login') }}">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
             </div>
-          </li>
-          <li class="nav-item {% if request.endpoint == 'main.multi_product_print_view' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('main.multi_product_print_view') }}">Print Stickers</a>
-          </li>
-          <li class="nav-item {% if request.endpoint == 'main.print_jobs' %}active{% endif %}">
-            <a class="nav-link" href="{{ url_for('main.print_jobs') }}">Print History</a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
-              Tools
-            </a>
-            <div class="dropdown-menu" aria-labelledby="toolsDropdown">
-              <a class="dropdown-item" href="{{ url_for('main.list_backups') }}">Backups</a>
-              <a class="dropdown-item" href="{{ url_for('main.analytics_dashboard') }}">Analytics</a>
-              {% if current_user.role == 'store_admin' %}
-              <a class="dropdown-item" href="{{ url_for('main.user_management') }}">User Management</a>
-              <a class="dropdown-item" href="{{ url_for('main.sticker_design') }}">Sticker Design</a>
-              <a class="dropdown-item" href="{{ url_for('main.import_export') }}">Import/Export</a>
-              {% endif %}
+        </nav>
+        <div class="container mt-5">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
             </div>
-          </li>
-          {% endif %}
-        </ul>
-        <ul class="navbar-nav">
-          {% if current_user.is_authenticated %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
-              <span>{{ current_user.name or current_user.username }}</span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
-              <a class="dropdown-item" href="{{ url_for('main.profile') }}">Profile</a>
-              <a class="dropdown-item" href="{{ url_for('main.settings') }}">Settings</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="{{ url_for('main.logout') }}">Logout</a>
-            </div>
-          </li>
-          {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('main.login') }}">Login</a>
-          </li>
-          {% endif %}
-        </ul>
-      </div>
-    </nav>
-    <div class="container mt-5">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">
-        {{ message }}
-      </div>
-      {% endfor %}
-      {% endif %}
-      {% endwith %}
-      {% block content %}{% endblock %}
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </div>
     </div>
-  </div>
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-left">
-        <span >&copy; 2024 {{ store_info.name if store_info else 'Product Sticker App'
-          }}. All rights reserved.</span>
-      </div>
-      <div class="foter-right text-md-right">
-        <a href="mailto:dev@ajithrn.com">Get Support</a>
-      </div>
-    </div>
-  </footer>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-left">
+                <span>&copy; 2024 {{ store_info.name if store_info else 'Product Sticker App'
+                    }}. All rights reserved.</span>
+            </div>
+            <div class="foter-right text-md-right">
+                <a href="mailto:dev@ajithrn.com">Get Support</a>
+            </div>
+        </div>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 
 </html>

@@ -61,6 +61,8 @@ def read_backup_logs():
                     backups.append((row[1], datetime.strptime(row[2], '%Y%m%d_%H%M%S')))
                 elif row[0] == "auto_backup_time":
                     auto_backup_time = row[2]
+    # Sort backups by date in descending order
+    backups.sort(key=lambda x: x[1], reverse=True)
     return backups, auto_backup_time
 
 def read_auto_backup_time():

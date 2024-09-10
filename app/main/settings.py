@@ -10,7 +10,7 @@ import io
 from app import db
 from app.models import Setting, StoreInfo, Product, ProductCategory, StickerDesign
 from app.forms import StoreInfoForm
-from .backups import read_auto_backup_time, create_backup
+from .backups import read_auto_backup_time, create_backup, set_auto_backup_time
 from .utils import encrypt_key, decrypt_key, generate_ingredients, generate_nutritional_facts, generate_allergen_info
 from . import main
 
@@ -53,15 +53,17 @@ def settings():
 
     if request.method == 'POST':
         if 'set_backup_time' in request.form:
-            hour, minute = request.form['time'].split(':')
-            schedule.clear()  # Clear existing schedule
-            schedule.every().day.at(f"{hour}:{minute}").do(create_backup)
-
-            # Store the scheduled time
-            settings.auto_backup_time = f"{hour}:{minute}"
-            db.session.commit()
-
-            flash('Automatic backup scheduled.', 'success')
+            new_backup_time = request.form['time']
+            if new_backup_time:
+                try:
+                    schedule.clear()  # Clear existing schedule
+                    schedule.every().day.at(new_backup_time).do(create_backup)
+                    set_auto_backup_time(new_backup_time)
+                    flash('Automatic backup scheduled successfully.', 'success')
+                except Exception as e:
+                    flash('Error scheduling automatic backup.', 'danger')
+            else:
+                flash('Please enter a valid time for automatic backup.', 'danger')
         elif 'store_info_submit' in request.form:
             if store_info_form.validate_on_submit():
                 if store_info is None:

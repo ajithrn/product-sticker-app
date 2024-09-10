@@ -5,7 +5,7 @@
 <div class="card mb-4">
     <div class="card-header">
         <h2 class="mb-0">Automatic Backup</h2>
-        <p class="mt-2 mb-0 font-italic">Set a time for automatic backups.</p>
+        <p class="mt-2 mb-0 font-italic">Set a time for automatic daily backups.</p>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('main.settings') }}">
@@ -16,6 +16,12 @@
             </div>
             <button type="submit" name="set_backup_time" class="btn btn-primary">Set Automatic Backup</button>
         </form>
+        {% if auto_backup_time %}
+            <p class="mt-3">Current automatic backup time: {{ auto_backup_time }}</p>
+        {% else %}
+            <p class="mt-3">No automatic backup time set. Please set a time for daily backups.</p>
+        {% endif %}
+        <p class="mt-3 text-info">Note: Automatic backups will occur daily at the specified time.</p>
     </div>
 </div>
 

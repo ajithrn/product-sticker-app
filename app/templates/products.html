@@ -6,24 +6,30 @@
     {{ form.hidden_tag() }}
     <div class="form-group">
         {{ form.search.label(class="form-label") }}
-        {{ form.search(class="form-control", id="searchInput") }}
-    </div>
-    <div class="form-group">
-        {{ form.submit(class="btn btn-primary") }}
+        {{ form.search(class="form-control", id="searchInput", placeholder="Type to Search") }}
     </div>
 </form>
 <hr>
 <div id="productList">
   {% if products %}
     <ul class="list-group mb-4">
+        <li class="list-group-item d-flex justify-content-between product-row product-row-header">
+            <div class="d-flex product-meta">
+                <span>Product Name</span>
+                <span>Weight</span>
+                <span>Category</span>
+            </div>
+            <div class="product-buttons">                
+            </div>
+        </li>
         {% for product in products %}
         <li class="list-group-item d-flex justify-content-between align-items-center product-row">
             <div class="d-flex product-meta">
                 <span class="fw-bold">{{ product.name.upper() }}</span>
                 <span>{{ product.net_weight }}G</span>
-                <span>({{ product.category.name }})</span>
+                <span>{{ product.category.name }}</span>
             </div>
-            <div class="product-buttons">
+            <div class="product-buttons d-flex gap-5">
                 <a href="{{ url_for('main.print_stickers_for_product', product_id=product.id) }}" class="btn btn-outline-secondary btn-sm">Print Sticker</a>
                 <a href="{{ url_for('main.edit_product', product_id=product.id) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
                 <a href="{{ url_for('main.duplicate_product', product_id=product.id) }}" class="btn btn-outline-secondary btn-sm">Duplicate</a>
@@ -61,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="d-flex product-meta">
                                     <span class="fw-bold">${product.name.toUpperCase()}</span>
                                     <span>${product.net_weight ? product.net_weight + 'G' : ''}</span>
-                                    <span>(${product.category})</span>
+                                    <span>${product.category}</span>
                                 </div>
                                 <div>
                                     <a href="/print/${product.id}" class="btn btn-outline-secondary btn-sm">Print Sticker</a>

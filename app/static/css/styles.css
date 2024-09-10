@@ -50,6 +50,11 @@ h4 {
   font-weight: 600;
 }
 
+/* Utility */
+.gap-5 {
+    gap: 5px;
+}
+
 /* Links */
 a {
   color: var(--primary-color);
@@ -343,6 +348,10 @@ a:hover {
   .product-meta {
     width: 100%;
   }
+}
+.product-row-header {
+    background: var( --header-bg-color);
+    color: var( --header-text-color);
 }
 .product-meta {
   width: 50%;

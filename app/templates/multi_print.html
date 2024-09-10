@@ -237,15 +237,8 @@
         const mfgDateCell = row.querySelector('.mfg-date');
         const expDateCell = row.querySelector('.exp-date');
 
-        const [productName, productWeight] = productNameCell.textContent.split(' ');
-        
-        const productNameInput = document.createElement('input');
-        productNameInput.type = 'text';
-        productNameInput.value = productName.trim();
-
-        const productWeightInput = document.createElement('input');
-        productWeightInput.type = 'text';
-        productWeightInput.value = productWeight ? productWeight.replace('G', '') : '';
+        // Keep the product name as text, not editable
+        const productName = productNameCell.textContent.trim();
 
         const quantityInput = document.createElement('input');
         quantityInput.type = 'number';
@@ -258,11 +251,6 @@
         const expDateInput = document.createElement('input');
         expDateInput.type = 'date';
         expDateInput.value = expDateCell.textContent.trim().replace(/ /g, '-');
-
-        productNameCell.textContent = '';
-        productNameCell.appendChild(productNameInput);
-        productNameCell.appendChild(document.createTextNode(' '));
-        productNameCell.appendChild(productWeightInput);
 
         quantityCell.textContent = '';
         quantityCell.appendChild(quantityInput);
@@ -279,7 +267,6 @@
         row.cells[4].appendChild(saveButton); 
 
         saveButton.addEventListener('click', function() {
-            productNameCell.textContent = `${productNameInput.value.toUpperCase()} ${productWeightInput.value ? productWeightInput.value + 'G' : ''}`;
             quantityCell.textContent = quantityInput.value;
             mfgDateCell.textContent = mfgDateInput.value;
             expDateCell.textContent = expDateInput.value;

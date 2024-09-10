@@ -52,7 +52,7 @@
         <tbody>
             {% for product_data in selected_products %}
                 <tr data-product-id="{{ product_data.id }}">
-                    <td class="product-name">{{ product_data.name }}</td>
+                    <td class="product-name">{{ product_data.name.upper() }} {% if product_data.net_weight %}{{ product_data.net_weight }}G{% endif %}</td>
                     <td class="quantity">{{ product_data.quantity }}</td>
                     <td class="mfg-date">{{ product_data.mfg_date.strftime('%d %b %Y') }}</td>
                     <td class="exp-date">{{ product_data.exp_date.strftime('%d %b %Y') }}</td>
@@ -117,15 +117,16 @@
             const item = document.createElement('a');
             item.href = '#';
             item.classList.add('list-group-item', 'list-group-item-action');
-            item.textContent = product.name;
+            item.textContent = `${product.name.toUpperCase()} ${product.net_weight ? product.net_weight + 'G' : ''}`;
             item.dataset.productId = product.id;
             item.dataset.productName = product.name;
+            item.dataset.productWeight = product.net_weight;
             item.dataset.shelfLife = product.shelf_life;
             item.addEventListener('click', function (event) {
                 event.preventDefault();
 
                 // Update search box and hidden input
-                productSearchInput.value = this.dataset.productName;
+                productSearchInput.value = `${this.dataset.productName} ${this.dataset.productWeight ? this.dataset.productWeight + 'G' : ''}`;
                 document.getElementById('selected_product_id').value = this.dataset.productId;
                 productSearchResults.innerHTML = '';
 
@@ -140,15 +141,15 @@
         existingRows.forEach(row => attachActionListeners(row));
     }
 
-
     // Event listener for the "Add Product" button
     addProductButton.addEventListener('click', function(event) {
         event.preventDefault();
         const productId = document.getElementById('selected_product_id').value;
         const productName = productSearchInput.value;
+        const productWeight = document.querySelector(`[data-product-id="${productId}"]`)?.dataset.productWeight;
 
         if (productId) {
-            addProductToTable(productId, productName);
+            addProductToTable(productId, productName, productWeight);
         }
     });
 
@@ -166,7 +167,7 @@
     }
 
     // Function to add product to the table
-    function addProductToTable(productId, productName) {
+    function addProductToTable(productId, productName, productWeight) {
         const quantity = document.getElementById('quantity').value;
         const mfgDate = document.getElementById('mfg_date').value;
         const expDate = document.getElementById('exp_date').value;
@@ -236,9 +237,15 @@
         const mfgDateCell = row.querySelector('.mfg-date');
         const expDateCell = row.querySelector('.exp-date');
 
+        const [productName, productWeight] = productNameCell.textContent.split(' ');
+        
         const productNameInput = document.createElement('input');
         productNameInput.type = 'text';
-        productNameInput.value = productNameCell.textContent.trim();
+        productNameInput.value = productName.trim();
+
+        const productWeightInput = document.createElement('input');
+        productWeightInput.type = 'text';
+        productWeightInput.value = productWeight ? productWeight.replace('G', '') : '';
 
         const quantityInput = document.createElement('input');
         quantityInput.type = 'number';
@@ -254,6 +261,8 @@
 
         productNameCell.textContent = '';
         productNameCell.appendChild(productNameInput);
+        productNameCell.appendChild(document.createTextNode(' '));
+        productNameCell.appendChild(productWeightInput);
 
         quantityCell.textContent = '';
         quantityCell.appendChild(quantityInput);
@@ -270,7 +279,7 @@
         row.cells[4].appendChild(saveButton); 
 
         saveButton.addEventListener('click', function() {
-            productNameCell.textContent = productNameInput.value;
+            productNameCell.textContent = `${productNameInput.value.toUpperCase()} ${productWeightInput.value ? productWeightInput.value + 'G' : ''}`;
             quantityCell.textContent = quantityInput.value;
             mfgDateCell.textContent = mfgDateInput.value;
             expDateCell.textContent = expDateInput.value;
@@ -288,9 +297,11 @@
         const selectedProducts = [];
         const tableRows = selectedProductsTable.querySelectorAll('tbody tr');
         tableRows.forEach(row => {
+            const [name, weight] = row.querySelector('.product-name').textContent.split(' ');
             selectedProducts.push({
                 'id': row.dataset.productId,
-                'name': row.querySelector('.product-name').textContent,
+                'name': name,
+                'weight': weight || '',
                 'quantity': row.querySelector('.quantity').textContent,
                 'mfg_date': row.querySelector('.mfg-date').textContent,
                 'exp_date': row.querySelector('.exp-date').textContent

@@ -330,3 +330,29 @@ a:hover {
 
 
 
+@media (max-width: 767.98px) {
+  .product-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  .product-row > div {    
+      flex: 0 0 100%;
+      max-width: 100%;      
+  }
+  .product-meta {
+    width: 100%;
+  }
+}
+.product-meta {
+  width: 50%;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.product-meta span:first-child {
+  flex: 0 0 50%;
+}
+.product-meta span:nth-child(2),
+.product-meta span:nth-child(3) {
+  flex: 0 0 25%;
+}

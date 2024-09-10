@@ -5,31 +5,85 @@
 <form method="POST" enctype="multipart/form-data">
   <div class="card mb-4">
     <div class="card-header">
-      <h2 class="mb-0">Page Size</h2>
-      <p class="mt-2 mb-0 font-italic">Define the overall dimensions of the sticker and its margins.</p>
+      <h2 class="mb-0">Sticker Size</h2>
+      <p class="mt-2 mb-0 font-italic">Define the dimensions of the sticker and its margins.</p>
     </div>
     <div class="card-body">
       <div class="row">
         <div class="col-md-4">
           <div class="form-group">
-            <label for="page_size_width">Width (mm):</label>
-            <input type="number" step="0.1" class="form-control" id="page_size_width" name="page_size_width"
+            <label for="sticker_size_width">Width (mm):</label>
+            <input type="number" step="0.1" class="form-control" id="sticker_size_width" name="sticker_size_width"
               value="{{ design.page_size['width'] }}" required>
           </div>
         </div>
         <div class="col-md-4">
           <div class="form-group">
-            <label for="page_size_height">Height (mm):</label>
-            <input type="number" step="0.1" class="form-control" id="page_size_height" name="page_size_height"
+            <label for="sticker_size_height">Height (mm):</label>
+            <input type="number" step="0.1" class="form-control" id="sticker_size_height" name="sticker_size_height"
               value="{{ design.page_size['height'] }}" required>
           </div>
         </div>
         <div class="col-md-4">
           <div class="form-group">
-            <label for="page_size_margin">Margin (mm):</label>
-            <input type="number" step="0.1" class="form-control" id="page_size_margin" name="page_size_margin"
+            <label for="sticker_size_margin">Margin (mm):</label>
+            <input type="number" step="0.1" class="form-control" id="sticker_size_margin" name="sticker_size_margin"
               value="{{ design.page_size['margin'] }}" required>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <h2 class="mb-0">Printer Settings</h2>
+      <p class="mt-2 mb-0 font-italic">Configure printer settings for sticker printing.</p>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="printer_type">Printer Type:</label>
+        <select class="form-control" id="printer_type" name="printer_type">
+          <option value="label" {% if design.printer_type == 'label' %}selected{% endif %}>Label Printer</option>
+          <option value="normal" {% if design.printer_type == 'normal' %}selected{% endif %}>Normal Printer</option>
+        </select>
+      </div>
+      
+      <div id="normal_printer_settings" class="d-none">
+        <div class="form-group">
+          <label for="paper_size">Paper Size:</label>
+          <select class="form-control" id="paper_size" name="paper_size">
+            <option value="A4" {% if design.paper_size == 'A4' %}selected{% endif %}>A4</option>
+            <option value="A5" {% if design.paper_size == 'A5' %}selected{% endif %}>A5</option>
+            <option value="custom" {% if design.paper_size == 'custom' %}selected{% endif %}>Custom Size</option>
+          </select>
+        </div>
+        
+        <div id="custom_paper_size" class="d-none">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="custom_paper_width">Width (mm):</label>
+                <input type="number" step="0.1" class="form-control" id="custom_paper_width" name="custom_paper_width"
+                  value="{{ design.custom_paper_width or '' }}">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="custom_paper_height">Height (mm):</label>
+                <input type="number" step="0.1" class="form-control" id="custom_paper_height" name="custom_paper_height"
+                  value="{{ design.custom_paper_height or '' }}">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="paper_orientation">Paper Orientation:</label>
+          <select class="form-control" id="paper_orientation" name="paper_orientation">
+            <option value="portrait" {% if design.paper_orientation == 'portrait' %}selected{% endif %}>Portrait</option>
+            <option value="landscape" {% if design.paper_orientation == 'landscape' %}selected{% endif %}>Landscape</option>
+          </select>
         </div>
       </div>
     </div>
@@ -196,23 +250,4 @@
 
   <button type="submit" class="btn btn-primary mt-3">Save Design</button>
 </form>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const toggles = document.querySelectorAll('.custom-control-input[type="checkbox"]');
-    toggles.forEach(toggle => {
-      toggle.addEventListener('change', function() {
-        const headingTextInput = this.closest('.row').querySelector('textarea, input[type="text"]');
-        const fontSizeInput = this.closest('.row').querySelector('input[type="number"]');
-        headingTextInput.disabled = !this.checked;
-        fontSizeInput.disabled = !this.checked;
-      });
-      // Initialize state
-      toggle.dispatchEvent(new Event('change'));
-    });
-  });
-</script>
 {% endblock %}

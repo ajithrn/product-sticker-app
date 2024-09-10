@@ -118,12 +118,24 @@ def sticker_design():
 
     if request.method == 'POST':
         try:
-            # Update page size
+            # Update page size (now sticker size)
             design.page_size = {
-                "width": float(request.form['page_size_width']),
-                "height": float(request.form['page_size_height']),
-                "margin": float(request.form['page_size_margin'])
+                "width": float(request.form['sticker_size_width']),
+                "height": float(request.form['sticker_size_height']),
+                "margin": float(request.form['sticker_size_margin'])
             }
+
+            # Update printer settings
+            design.printer_type = request.form['printer_type']
+            design.paper_size = request.form['paper_size']
+            design.paper_orientation = request.form['paper_orientation']
+
+            if design.paper_size == 'custom':
+                design.custom_paper_width = float(request.form['custom_paper_width'])
+                design.custom_paper_height = float(request.form['custom_paper_height'])
+            else:
+                design.custom_paper_width = None
+                design.custom_paper_height = None
 
             # Update positions of various elements
             element_positions = ['product_name', 'mrp', 'net_weight', 'mfg_date', 'exp_date', 'batch_no', 'ingredients', 'nutritional_facts', 'allergen_info']

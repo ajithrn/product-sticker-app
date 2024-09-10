@@ -153,9 +153,14 @@ def sticker_design():
 
             # Update heading options
             for heading in ['nutritional', 'allergen', 'ingredients']:
-                setattr(design, f'print_{heading}_heading', f'print_{heading}_heading' in request.form)
-                setattr(design, f'{heading}_heading_text', request.form[f'{heading}_heading_text'])
-                setattr(design, f'{heading}_heading_font_size', float(request.form[f'{heading}_heading_font_size']))
+                print_heading = f'print_{heading}_heading' in request.form
+                setattr(design, f'print_{heading}_heading', print_heading)
+                if print_heading:
+                    setattr(design, f'{heading}_heading_text', request.form.get(f'{heading}_heading_text', ''))
+                    setattr(design, f'{heading}_heading_font_size', float(request.form.get(f'{heading}_heading_font_size', 0)))
+                else:
+                    setattr(design, f'{heading}_heading_text', '')
+                    setattr(design, f'{heading}_heading_font_size', 0)
 
             # Update new font size fields
             design.mrp_font_size = float(request.form['mrp_font_size'])
@@ -171,8 +176,8 @@ def sticker_design():
 
             db.session.commit()
             flash('Sticker design updated successfully.', 'success')
-        except ValueError:
-            flash('Invalid input. Please ensure all fields contain valid numbers.', 'danger')
+        except ValueError as e:
+            flash(f'Invalid input. Please ensure all fields contain valid numbers. Error: {str(e)}', 'danger')
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'danger')
         return redirect(url_for('main.sticker_design'))

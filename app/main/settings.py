@@ -6,6 +6,7 @@ import schedule
 import base64
 import csv
 import io
+import json
 
 from app import db
 from app.models import Setting, StoreInfo, Product, ProductCategory, StickerDesign
@@ -22,6 +23,24 @@ def store_admin_required(f):
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
+
+def to_bool(value):
+    return str(value).lower() in ('true', 't', 'yes', 'y', '1')
+
+def to_float(value):
+    try:
+        return float(value) if value else None
+    except ValueError:
+        return None
+
+def to_json(value):
+    if not value:
+        return None
+    try:
+        valid_json = value.replace("'", '"')
+        return json.loads(valid_json)
+    except json.JSONDecodeError:
+        return None
 
 @main.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -56,7 +75,7 @@ def settings():
             new_backup_time = request.form['time']
             if new_backup_time:
                 try:
-                    schedule.clear()  # Clear existing schedule
+                    schedule.clear() 
                     schedule.every().day.at(new_backup_time).do(create_backup)
                     set_auto_backup_time(new_backup_time)
                     flash('Automatic backup scheduled successfully.', 'success')
@@ -77,7 +96,6 @@ def settings():
         elif 'set_gpt_key' in request.form:
             gpt_api_key = request.form['gpt_api_key']
             if gpt_api_key and gpt_api_key != partial_api_key:
-                # Encrypt the API key using the SECRET_KEY from the config
                 encrypted_key = encrypt_key(gpt_api_key)
                 settings.gpt_api_key_hash = encrypted_key
                 db.session.commit()
@@ -203,25 +221,51 @@ def export_data(model, filename, csv_headers=None):
 def import_data(model, data_stream, mapper):
     reader = csv.DictReader(data_stream)
     for row in reader:
-        item = mapper(row)
-        db.session.add(item)
+        mapped_data = mapper(row)
+        existing_item = model.query.get(mapped_data.id)
+
+        if existing_item:
+            for key, value in mapped_data.__dict__.items():
+                if key != '_sa_instance_state':
+                    setattr(existing_item, key, value)
+        else:
+            db.session.add(mapped_data)
+
     db.session.commit()
 
 def sticker_design_mapper(row):
     return StickerDesign(
-        id=row['id'],
-        page_size=row['page_size'],
-        product_name_position=row['product_name_position'],
-        mrp_position=row['mrp_position'],
-        net_weight_position=row['net_weight_position'],
-        mfg_date_position=row['mfg_date_position'],
-        exp_date_position=row['exp_date_position'],
-        batch_no_position=row['batch_no_position'],
-        ingredients_position=row['ingredients_position'],
-        nutritional_facts_position=row['nutritional_facts_position'],
-        allergen_info_position=row['allergen_info_position'],
-        heading_font_size=row['heading_font_size'],
-        content_font_size=row['content_font_size'],
+        id=int(row['id']),  
+        page_size=to_json(row['page_size']),
+        product_name_position=to_json(row['product_name_position']),
+        mrp_position=to_json(row['mrp_position']),
+        net_weight_position=to_json(row['net_weight_position']),
+        mfg_date_position=to_json(row['mfg_date_position']),
+        exp_date_position=to_json(row['exp_date_position']),
+        batch_no_position=to_json(row['batch_no_position']),
+        ingredients_position=to_json(row['ingredients_position']),
+        nutritional_facts_position=to_json(row['nutritional_facts_position']),
+        allergen_info_position=to_json(row['allergen_info_position']),
+        heading_font_size=to_float(row['heading_font_size']),
+        content_font_size=to_float(row['content_font_size']),
         bg_image=row['bg_image'],
-        use_bg_image=row['use_bg_image']
+        use_bg_image=to_bool(row['use_bg_image']),
+        print_nutritional_heading=to_bool(row['print_nutritional_heading']),
+        print_allergen_heading=to_bool(row['print_allergen_heading']),
+        print_ingredients_heading=to_bool(row['print_ingredients_heading']),
+        nutritional_heading_text=row['nutritional_heading_text'],
+        allergen_heading_text=row['allergen_heading_text'],
+        ingredients_heading_text=row['ingredients_heading_text'],
+        nutritional_heading_font_size=to_float(row['nutritional_heading_font_size']),
+        allergen_heading_font_size=to_float(row['allergen_heading_font_size']),
+        ingredients_heading_font_size=to_float(row['ingredients_heading_font_size']),
+        mrp_font_size=to_float(row['mrp_font_size']),
+        ingredients_font_size=to_float(row['ingredients_font_size']),
+        allergen_info_font_size=to_float(row['allergen_info_font_size']),
+        nutritional_facts_font_size=to_float(row['nutritional_facts_font_size']),
+        printer_type=row['printer_type'],
+        paper_size=row['paper_size'],
+        custom_paper_width=to_float(row['custom_paper_width']),
+        custom_paper_height=to_float(row['custom_paper_height']),
+        paper_orientation=row['paper_orientation']
     )

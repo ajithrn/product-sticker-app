@@ -115,7 +115,7 @@ def draw_sticker(c, sticker, width, height, bg_image, design, x, y):
     nutritional_lines = sticker.nutritional_facts.split("\n")
     if design.print_nutritional_heading:
         draw_nutritional_heading(c, design.nutritional_heading_text, content_x + design.nutritional_facts_position['left']*mm, content_y + content_height - design.nutritional_facts_position['top']*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.nutritional_heading_font_size)
-        draw_multiline_text(c, nutritional_lines, content_x + design.nutritional_facts_position['left']*mm, content_y + content_height - (design.nutritional_facts_position['top'] + 4.8)*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.nutritional_facts_font_size)
+        draw_multiline_text(c, nutritional_lines, content_x + design.nutritional_facts_position['left']*mm, content_y + content_height - (design.nutritional_facts_position['top'] + (design.nutritional_facts_font_size*0.7))*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.nutritional_facts_font_size)
     else:
         draw_multiline_text(c, nutritional_lines, content_x + design.nutritional_facts_position['left']*mm, content_y + content_height - design.nutritional_facts_position['top']*mm, max_width=design.nutritional_facts_position['max_width']*mm, font_size=design.nutritional_facts_font_size)
 
@@ -123,7 +123,7 @@ def draw_sticker(c, sticker, width, height, bg_image, design, x, y):
     allergen_lines = sticker.allergen_information.split("\n")
     if design.print_allergen_heading:
         draw_wrapped_text(c, design.allergen_heading_text, content_x + design.allergen_info_position['left']*mm, content_y + content_height - design.allergen_info_position['top']*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.allergen_heading_font_size)
-        draw_multiline_text(c, allergen_lines, content_x + design.allergen_info_position['left']*mm, content_y + content_height - (design.allergen_info_position['top'] + 4.8)*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.allergen_info_font_size)
+        draw_multiline_text(c, allergen_lines, content_x + design.allergen_info_position['left']*mm, content_y + content_height - (design.allergen_info_position['top'] + (design.allergen_info_font_size*0.7))*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.allergen_info_font_size)
     else:
         draw_multiline_text(c, allergen_lines, content_x + design.allergen_info_position['left']*mm, content_y + content_height - design.allergen_info_position['top']*mm, max_width=design.allergen_info_position['max_width']*mm, font_size=design.allergen_info_font_size)
 
@@ -131,7 +131,7 @@ def draw_sticker(c, sticker, width, height, bg_image, design, x, y):
     ingredients_lines = sticker.ingredients.split("\n")
     if design.print_ingredients_heading:
         draw_wrapped_text(c, design.ingredients_heading_text, content_x + design.ingredients_position['left']*mm, content_y + content_height - design.ingredients_position['top']*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.ingredients_heading_font_size)
-        draw_multiline_text(c, ingredients_lines, content_x + design.ingredients_position['left']*mm, content_y + content_height - (design.ingredients_position['top'] + 4.8)*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.ingredients_font_size)
+        draw_multiline_text(c, ingredients_lines, content_x + design.ingredients_position['left']*mm, content_y + content_height - (design.ingredients_position['top'] + (design.ingredients_font_size*0.7))*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.ingredients_font_size)
     else:
         draw_multiline_text(c, ingredients_lines, content_x + design.ingredients_position['left']*mm, content_y + content_height - design.ingredients_position['top']*mm, max_width=design.ingredients_position['max_width']*mm, font_size=design.ingredients_font_size)
 

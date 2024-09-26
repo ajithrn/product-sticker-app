@@ -49,7 +49,7 @@ def create_sticker_pdf(stickers, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=(PAGE_WIDTH, PAGE_HEIGHT))
     
     if design.use_bg_image and design.bg_image:
-        bg_image_path = os.path.join(current_app.root_path, 'static', 'images', design.bg_image)
+        bg_image_path = os.path.join(current_app.root_path, 'static', design.bg_image)
         bg_image = ImageReader(bg_image_path)
     else:
         bg_image = None

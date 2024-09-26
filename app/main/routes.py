@@ -171,8 +171,13 @@ def sticker_design():
             if 'bg_image' in request.files:
                 bg_image = request.files['bg_image']
                 if bg_image.filename != '':
-                    bg_image.save(os.path.join(current_app.root_path, 'static', 'images', bg_image.filename))
-                    design.bg_image = bg_image.filename
+                    # Create the uploads directory if it doesn't exist
+                    uploads_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+                    os.makedirs(uploads_dir, exist_ok=True)
+                    
+                    # Save the file to the uploads directory
+                    bg_image.save(os.path.join(uploads_dir, bg_image.filename))
+                    design.bg_image = os.path.join('uploads', bg_image.filename)
 
             db.session.commit()
             flash('Sticker design updated successfully.', 'success')

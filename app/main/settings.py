@@ -6,7 +6,9 @@ import base64
 import csv
 import io
 import json
+import os
 from decimal import Decimal
+from werkzeug.utils import secure_filename
 
 from app import db
 from app.models import Setting, StoreInfo, Product, ProductCategory, StickerDesign
@@ -39,6 +41,20 @@ def to_json(value):
         return json.loads(valid_json)
     except json.JSONDecodeError:
         return None
+
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_logo(file):
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'logos')
+        os.makedirs(upload_folder, exist_ok=True)
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+        return os.path.join('uploads', 'logos', filename)
+    return None
 
 @main.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -85,6 +101,19 @@ def settings():
                 if store_info is None:
                     store_info = StoreInfo()
                     db.session.add(store_info)
+                
+                # Handle logo upload
+                logo_file = request.files.get('logo')
+                if logo_file:
+                    logo_path = save_logo(logo_file)
+                    if logo_path:
+                        # Delete old logo if it exists
+                        if store_info and store_info.logo:
+                            old_logo_path = os.path.join(current_app.root_path, 'static', store_info.logo)
+                            if os.path.exists(old_logo_path):
+                                os.remove(old_logo_path)
+                        store_info.logo = logo_path
+
                 store_info_form.populate_obj(store_info)
                 db.session.commit()
                 flash('Store information updated successfully.', 'success')
@@ -263,6 +292,13 @@ def sticker_design_mapper(row):
     return StickerDesign(
         id=int(row['id']),  
         page_size=to_json(row['page_size']),
+        store_logo_position=to_json(row['store_logo_position']),
+        store_name_position=to_json(row['store_name_position']),
+        store_address_position=to_json(row['store_address_position']),
+        store_phone_position=to_json(row['store_phone_position']),
+        store_gst_position=to_json(row['store_gst_position']),
+        store_fssai_position=to_json(row['store_fssai_position']),
+        store_email_position=to_json(row['store_email_position']),
         product_name_position=to_json(row['product_name_position']),
         mrp_position=to_json(row['mrp_position']),
         net_weight_position=to_json(row['net_weight_position']),
@@ -295,3 +331,4 @@ def sticker_design_mapper(row):
         custom_paper_height=to_float(row['custom_paper_height']),
         paper_orientation=row['paper_orientation']
     )
+

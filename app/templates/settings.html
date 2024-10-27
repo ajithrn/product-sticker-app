@@ -31,7 +31,7 @@
         <p class="mt-2 mb-0 font-italic">Update the store information.</p>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('main.settings') }}">
+        <form method="POST" action="{{ url_for('main.settings') }}" enctype="multipart/form-data">
             {{ store_info_form.csrf_token }}
             <div class="form-group">
                 {{ store_info_form.name.label }}
@@ -52,6 +52,20 @@
             <div class="form-group">
                 {{ store_info_form.fssai_number.label }}
                 {{ store_info_form.fssai_number(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ store_info_form.email.label }}
+                {{ store_info_form.email(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ store_info_form.logo.label }}
+                {{ store_info_form.logo(class="form-control-file") }}
+                {% if store_info and store_info.logo %}
+                <div class="mt-2">
+                    <p>Current Logo:</p>
+                    <img src="{{ url_for('static', filename=store_info.logo) }}" alt="Store Logo" style="max-width: 200px;">
+                </div>
+                {% endif %}
             </div>
             <button type="submit" name="store_info_submit" class="btn btn-primary">Save Store Info</button>
         </form>

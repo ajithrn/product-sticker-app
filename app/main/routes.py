@@ -6,6 +6,7 @@ from flask_login import (
     current_user
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from functools import wraps
 import os
 
@@ -118,6 +119,18 @@ def sticker_design():
 
     if request.method == 'POST':
         try:
+            # Handle clear background image
+            if 'clear_bg_image' in request.form:
+                if design.bg_image:
+                    bg_path = os.path.join(current_app.root_path, 'static', design.bg_image)
+                    if os.path.exists(bg_path):
+                        os.remove(bg_path)
+                    design.bg_image = None
+                    design.use_bg_image = False
+                db.session.commit()
+                flash('Background image cleared successfully.', 'success')
+                return redirect(url_for('main.sticker_design'))
+
             # Update page size (now sticker size)
             design.page_size = {
                 "width": float(request.form['sticker_size_width']),
@@ -137,53 +150,66 @@ def sticker_design():
                 design.custom_paper_width = None
                 design.custom_paper_height = None
 
-            # Update positions of various elements
-            element_positions = ['product_name', 'mrp', 'net_weight', 'mfg_date', 'exp_date', 'batch_no', 'ingredients', 'nutritional_facts', 'allergen_info']
-            for element in element_positions:
+            # Update store info positions and toggles
+            store_elements = ['store_logo', 'store_name', 'store_address', 'store_phone', 'store_gst', 'store_fssai', 'store_email']
+            for element in store_elements:
                 position = {
                     "top": float(request.form[f'{element}_position_top']),
                     "left": float(request.form[f'{element}_position_left']),
-                    "max_width": float(request.form[f'{element}_position_max_width'])
+                    "max_width": float(request.form[f'{element}_position_max_width']),
+                    "font_size": float(request.form.get(f'{element}_position_font_size', design.content_font_size))
+                }
+                setattr(design, f'{element}_position', position)
+                setattr(design, f'print_{element}', request.form.get(f'print_{element}', 'off') == 'on')
+
+            # Update product info positions
+            product_elements = ['product_name', 'mrp', 'net_weight', 'mfg_date', 'exp_date', 'batch_no', 'ingredients', 'nutritional_facts', 'allergen_info']
+            for element in product_elements:
+                position = {
+                    "top": float(request.form[f'{element}_position_top']),
+                    "left": float(request.form[f'{element}_position_left']),
+                    "max_width": float(request.form[f'{element}_position_max_width']),
+                    "font_size": float(request.form.get(f'{element}_position_font_size', design.content_font_size))
                 }
                 setattr(design, f'{element}_position', position)
 
             design.heading_font_size = float(request.form['heading_font_size'])
             design.content_font_size = float(request.form['content_font_size'])
-            design.use_bg_image = 'use_bg_image' in request.form
+            design.use_bg_image = request.form.get('use_bg_image', 'off') == 'on'
 
             # Update heading options
             for heading in ['nutritional', 'allergen', 'ingredients']:
-                print_heading = f'print_{heading}_heading' in request.form
+                print_heading = request.form.get(f'print_{heading}_heading', 'off') == 'on'
                 setattr(design, f'print_{heading}_heading', print_heading)
-                if print_heading:
-                    setattr(design, f'{heading}_heading_text', request.form.get(f'{heading}_heading_text', ''))
-                    setattr(design, f'{heading}_heading_font_size', float(request.form.get(f'{heading}_heading_font_size', 0)))
-                else:
-                    setattr(design, f'{heading}_heading_text', '')
-                    setattr(design, f'{heading}_heading_font_size', 0)
+                setattr(design, f'{heading}_heading_text', request.form.get(f'{heading}_heading_text', ''))
+                setattr(design, f'{heading}_heading_font_size', float(request.form.get(f'{heading}_heading_font_size', design.heading_font_size)))
 
-            # Update new font size fields
-            design.mrp_font_size = float(request.form['mrp_font_size'])
-            design.ingredients_font_size = float(request.form['ingredients_font_size'])
-            design.allergen_info_font_size = float(request.form['allergen_info_font_size'])
-            design.nutritional_facts_font_size = float(request.form['nutritional_facts_font_size'])
-
+            # Handle background image upload
             if 'bg_image' in request.files:
                 bg_image = request.files['bg_image']
                 if bg_image.filename != '':
+                    # Delete old background image if it exists
+                    if design.bg_image:
+                        old_bg_path = os.path.join(current_app.root_path, 'static', design.bg_image)
+                        if os.path.exists(old_bg_path):
+                            os.remove(old_bg_path)
+                    
                     # Create the uploads directory if it doesn't exist
-                    uploads_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+                    uploads_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'backgrounds')
                     os.makedirs(uploads_dir, exist_ok=True)
                     
                     # Save the file to the uploads directory
-                    bg_image.save(os.path.join(uploads_dir, bg_image.filename))
-                    design.bg_image = os.path.join('uploads', bg_image.filename)
+                    filename = secure_filename(bg_image.filename)
+                    bg_image.save(os.path.join(uploads_dir, filename))
+                    design.bg_image = os.path.join('uploads', 'backgrounds', filename)
 
             db.session.commit()
             flash('Sticker design updated successfully.', 'success')
         except ValueError as e:
+            db.session.rollback()
             flash(f'Invalid input. Please ensure all fields contain valid numbers. Error: {str(e)}', 'danger')
         except Exception as e:
+            db.session.rollback()
             flash(f'An error occurred: {str(e)}', 'danger')
         return redirect(url_for('main.sticker_design'))
 

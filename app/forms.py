@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, DateField, TextAreaField, BooleanField, DecimalField
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, DateField, TextAreaField, BooleanField, DecimalField, FileField
 from wtforms.validators import DataRequired, Length, ValidationError, Email, EqualTo, Optional, NumberRange
 from app.models import User, ProductCategory
 
@@ -78,11 +78,13 @@ class CategoryForm(FlaskForm):
     submit = SubmitField('Save')
 
 class StoreInfoForm(FlaskForm):
-    name = StringField('Store Name', validators=[DataRequired(), Length(max=100)])
-    address = TextAreaField('Address', validators=[DataRequired()])
-    phone_number = StringField('Phone Number', validators=[DataRequired(), Length(min=10, max=20)])
-    gst_number = StringField('GST Number', validators=[DataRequired(), Length(min=15, max=20)])
-    fssai_number = StringField('FSSAI Number', validators=[DataRequired(), Length(min=14, max=20)])
+    name = StringField('Store Name', validators=[Optional(), Length(max=100)])
+    address = TextAreaField('Address', validators=[Optional()])
+    phone_number = StringField('Phone Number', validators=[Optional(), Length(min=10, max=20)])
+    gst_number = StringField('GST Number', validators=[Optional(), Length(min=15, max=20)])
+    fssai_number = StringField('FSSAI Number', validators=[Optional(), Length(min=14, max=20)])
+    email = StringField('Email', validators=[Optional(), Email(), Length(max=100)])
+    logo = FileField('Store Logo', validators=[Optional()])
     submit = SubmitField('Save Store Info')
 
 class StickerDesignForm(FlaskForm):
@@ -90,3 +92,5 @@ class StickerDesignForm(FlaskForm):
     print_allergen_heading = BooleanField('Print Allergen Information Heading')
     print_ingredients_heading = BooleanField('Print Ingredients Heading')
     submit = SubmitField('Save Design')
+ 
+ 

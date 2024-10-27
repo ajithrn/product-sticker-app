@@ -20,6 +20,7 @@
                     <td>{{ backup }}</td>
                     <td>{% if backup_time %}{{ backup_time.strftime('%d/%m/%Y %H:%M:%S') }}{% else %}Invalid Timestamp{% endif %}</td>
                     <td>
+                        <a href="{{ url_for('main.download_backup', backup_name=backup) }}" class="btn btn-outline-primary btn-sm">Download</a>
                         <form method="POST" action="{{ url_for('main.restore_backup', backup_name=backup) }}" style="display:inline;">
                             <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Are you sure you want to restore this backup?');">Restore</button>
                         </form>

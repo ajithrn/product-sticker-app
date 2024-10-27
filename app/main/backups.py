@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app, send_from_directory
 from flask_login import login_required, current_user
 from . import main
 from app import db
@@ -272,6 +272,26 @@ def manual_create_backup():
         flash(f'Error creating backup: {str(e)}', 'danger')
     
     return redirect(url_for('main.list_backups'))
+
+@main.route('/backups/download/<backup_name>')
+@login_required
+@store_admin_required
+def download_backup(backup_name):
+    """
+    View function for downloading a backup file.
+    Only store admin can download backups.
+    """
+    try:
+        return send_from_directory(
+            BACKUP_DIR,
+            backup_name,
+            as_attachment=True,
+            download_name=backup_name
+        )
+    except Exception as e:
+        current_app.logger.error(f'Error downloading backup: {e}')
+        flash(f'Error downloading backup: {str(e)}', 'danger')
+        return redirect(url_for('main.list_backups'))
 
 def run_schedule():
     while True:

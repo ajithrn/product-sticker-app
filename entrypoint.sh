@@ -1,12 +1,7 @@
 #!/bin/sh
 
-# Load environment variables from .env file
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
-fi
-
-# Extract the database name from DATABASE_URL
-DB_NAME=$(echo $DATABASE_URL | sed -E 's/.*\/([^/]+)$/\1/')
+# Set default value if not provided
+: "${FLASK_ENV:=production}"
 
 # Ensure backup directory exists and has correct permissions
 mkdir -p /app/backups
@@ -16,24 +11,27 @@ chmod 755 /app/backups
 mkdir -p /app/instance
 chmod 755 /app/instance
 
-# Create an empty database file if it doesn't exist
-touch /app/instance/$DB_NAME
-chmod 644 /app/instance/$DB_NAME
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL..."
+while ! nc -z db 5432; do
+  sleep 1
+done
+echo "PostgreSQL is ready!"
 
-# Initialize the database if it hasn't been initialized yet
-if [ ! -f /app/instance/database_initialized ]; then
-  flask db init
-  touch /app/instance/database_initialized
-fi
+# Initialize database with migrations
+echo "Running database migrations..."
+export FLASK_APP=run.py
+export DATABASE_URL=postgresql://postgres:postgres@db:5432/product_sticker_app
+export DOCKER_ENV=true
 
-# Apply database migrations
-flask db migrate -m "Auto-generated migration" || true
+# Run migrations
 flask db upgrade
 
-# Start the application
+# Start the application based on environment
 if [ "$FLASK_ENV" = "development" ]; then
-    echo "Starting Flask development server..."
-    flask run --host=0.0.0.0 --port=5000
+    echo "Starting Flask development server with hot reload..."
+    # Use Flask development server with hot reload
+    flask run --host=0.0.0.0 --port=5000 --reload
 else
     echo "Starting Gunicorn production server..."
     gunicorn --bind 0.0.0.0:5000 run:app

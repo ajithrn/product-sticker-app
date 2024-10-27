@@ -12,7 +12,7 @@ This is a web application for managing food products and printing stickers for t
 - User authentication (register, login, logout)
 - Product and category management with pagination
 - Individual sticker printing from the product page
-- Multi-product sticker printing with AJAX search, inline editing, and batch printing.
+- Multi-product sticker printing with AJAX search, inline editing, and batch printing
 - Analytics dashboard
 - User management (Store Admin and Staff roles)
 - Profile management
@@ -25,162 +25,159 @@ This is a web application for managing food products and printing stickers for t
   - View, restore, and delete backups
   - Store backup logs and settings in a CSV file for reliability
 
-## Setup Instructions
+## Prerequisites
 
-### Prerequisites
-- Python 3.6+
-- Pip (Python package installer)
-- Virtual environment (recommended)
-- Docker and Docker Compose (for containerized deployment)
+- Docker
+- Docker Compose
 
-### Installation
+That's it! You don't need Python, PostgreSQL, or any other dependencies installed locally since everything runs inside Docker containers.
+
+## Quick Start
 
 1. **Clone the repository**:
-
    ```sh
    git clone https://github.com/ajithrn/product-sticker-app.git
    cd product-sticker-app
    ```
 
-2. **Create and activate a virtual environment**:
-
+2. **Set up environment variables**:
+   Copy `.env.example` to `.env`:
    ```sh
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   cp .env.example .env
    ```
+   
+   The following environment variables are available:
 
-3. **Install the required packages**:
-
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-4. **Set up the environment variables**:
-   Create a `.env` file in the root directory and add the following content:
    ```plaintext
-   SECRET_KEY=your-secret-key #Make sure its length is 32
-   DATABASE_URL=sqlite:///instance/product_sticker_app.db
-   DB_NAME=product_sticker_app.db
-   SUPER_ADMIN_USERNAME=admin
-   SUPER_ADMIN_PASSWORD=admin_password
-   SUPER_ADMIN_EMAIL=admin@example.com
-   FLASK_ENV=development
-   FLASK_DEBUG=1
+   # Required - Must be set in .env
+   SECRET_KEY=your-secret-key-here        # Application secret key
+   SUPER_ADMIN_USERNAME=admin             # Initial admin username
+   SUPER_ADMIN_PASSWORD=admin_password    # Initial admin password
+   SUPER_ADMIN_EMAIL=admin@example.com    # Initial admin email
+
+   # Optional - Have defaults in Docker
+   FLASK_ENV=development                  # development or production (default: development)
+   POSTGRES_USER=postgres                 # Database user (default: postgres)
+   POSTGRES_PASSWORD=postgres             # Database password (default: postgres)
+   POSTGRES_DB=product_sticker_app        # Database name (default: product_sticker_app)
    ```
 
-5. **Initialize the database**:
+   Note: The database connection URL is automatically configured by Docker Compose, you don't need to set DATABASE_URL manually.
+
+3. **Start the application**:
    ```sh
-   flask db init
-   flask db migrate -m "Initial migration."
-   flask db upgrade
+   docker-compose up --build
    ```
 
-6. **Run the application**:
+4. **Access the application**:
+   Open your browser and navigate to `http://localhost:5000`
+
+That's it! The application is now running with:
+- Flask web application
+- PostgreSQL database
+- Automatic database migrations
+- Live code reloading for development
+
+## Development Workflow
+
+### Starting/Stopping the Application
+
+- **Start containers**:
+  ```sh
+  docker-compose up
+  ```
+
+- **Start in background**:
+  ```sh
+  docker-compose up -d
+  ```
+
+- **Stop containers**:
+  ```sh
+  docker-compose down
+  ```
+
+- **View logs**:
+  ```sh
+  docker-compose logs -f
+  ```
+
+### Database Management
+
+Database migrations are handled automatically when the container starts. If you make changes to the database models:
+
+1. **Create a migration**:
    ```sh
-   flask run
+   docker-compose exec web flask db migrate -m "Description of changes"
    ```
 
-7. **Open your web browser and navigate to** `http://127.0.0.1:5000/`.
-
-## Running with Docker
-
-To run this application using Docker, follow these steps:
-
-1. Make sure you have Docker and Docker Compose installed on your system.
-
-2. Build the Docker image:
-   ```
-   docker-compose build
+2. **Apply migration**:
+   ```sh
+   docker-compose exec web flask db upgrade
    ```
 
-3. Run the Docker container:
+### Backup Management
+
+The application includes a robust backup system for PostgreSQL:
+- Backups are stored in a dedicated Docker volume
+- Manual backups can be created through the web interface
+- Automatic scheduled backups can be configured
+- Backups can be viewed, restored, and managed through the web interface
+
+### Development Features
+
+- **Live Reloading**: Code changes are automatically detected and the application reloads
+- **Debug Mode**: Detailed error pages and debugging tools are enabled
+- **Volume Mounting**: Local files are mounted into the container for immediate updates
+
+## Production Deployment
+
+For production deployment:
+
+1. Update `.env` file:
+   ```plaintext
+   # Required settings
+   FLASK_ENV=production
+   SECRET_KEY=<strong-secret-key>
+   SUPER_ADMIN_USERNAME=<admin-username>
+   SUPER_ADMIN_PASSWORD=<secure-password>
+   SUPER_ADMIN_EMAIL=<admin-email>
+
+   # Optional - Using defaults
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=product_sticker_app
    ```
-   docker-compose up
+
+2. Start the containers:
+   ```sh
+   docker-compose up -d
    ```
-
-4. The application will be available at `http://localhost:5000`.
-
-5. To stop the container, use CTRL+C in the terminal where it's running, or run:
-   ```
-   docker-compose down
-   ```
-
-## Docker and Database Migrations
-
-The Docker setup is configured to automatically apply any pending database migrations when the container starts. This means:
-
-1. When you run `docker-compose up`, it will automatically apply any pending migrations before starting the Flask application.
-
-2. If you make changes to your database models:
-   a. Create a new migration:
-      ```
-      docker-compose run web flask db migrate -m "Description of changes"
-      ```
-   b. The next time you run `docker-compose up`, these migrations will be automatically applied.
-
-3. If you need to apply migrations manually, you can run:
-   ```
-   docker-compose run web flask db upgrade
-   ```
-
-This setup ensures that your database schema is always up-to-date with your model definitions when running the application in Docker.
-
-## Development with Live Reloading
-For live reloading during development, ensure that you set the `FLASK_ENV` environment variable to `development`. The application will automatically watch for changes in your files and reload the browser as needed.
-
-1. **Set the environment variable**:
-    - On Unix-based systems (Linux, macOS):
-      ```sh
-      export FLASK_ENV=development
-      ```
-    - On Windows:
-      ```sh
-      set FLASK_ENV=development
-      ```
-
-2. **Run the application**:
-    ```sh
-    python run.py
-    ```
-
-This will enable the Flask development server with live reloading when code changes are detected.
-
-## Production Mode
-For production, make sure the `FLASK_ENV` environment variable is set to `production` (or simply not set to `development`). The application will run normally without live reloading.
-
-```sh
-export FLASK_ENV=production
-python run.py # Or flask run
-```
 
 ## PDF Generation and Printing
-Stickers are generated as PDFs with custom dimensions (85mm x 95mm) including margins (2.5mm each side) and sent directly to the printer. Ensure your printer is set up correctly and you have the necessary permissions. Generates stickers will open in new tab and users can print from there.
 
-
-## Usage
-- Register a new user account or use the default super admin account.
-- Log in with the created account or super admin credentials.
-- Once login change the super admin password.
-- Navigate through the categories, products, and print stickers pages.
-- Use the analytics dashboard to view insights.
-- Store Admin can manage users and assign roles.
-- Manage database backups via the `/backups` route.
+Stickers are generated as PDFs with custom dimensions (85mm x 95mm) including margins (2.5mm each side) and sent directly to the printer. Generated stickers will open in a new tab for printing.
 
 ## Technologies Used
-- Flask (Python web framework)
-- SQLAlchemy (ORM)
-- Flask-Login (User authentication)
-- Flask-WTF (Form handling)
-- Flask-Bcrypt (Password hashing)
-- Flask-Migrate (Database migrations)
-- ReportLab (PDF generation)
-- Flask-Paginate (Pagination)
-- Bootstrap (CSS framework)
-- pywin32 (Windows printing)
-- pycups (Linux/Mac printing)
-- schedule (Python library for scheduling tasks)
-- LiveReload (Development live reloading)
-- Docker (Containerization)
+
+- **Backend**:
+  - Flask (Python web framework)
+  - PostgreSQL (Database)
+  - SQLAlchemy (ORM)
+  - Flask-Login (Authentication)
+  - Flask-WTF (Forms)
+  - Flask-Migrate (Database migrations)
+  - ReportLab (PDF generation)
+
+- **Frontend**:
+  - Bootstrap (CSS framework)
+  - JavaScript/jQuery
+  - AJAX for dynamic updates
+
+- **Infrastructure**:
+  - Docker (Containerization)
+  - Docker Compose (Container orchestration)
 
 ## License
+
 This project is licensed under the MIT License.

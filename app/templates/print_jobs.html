@@ -15,23 +15,35 @@
                 <th>Product</th>
                 <th>Quantity</th>
                 <th>Date</th>
-                <th>Printed By</th>
-                <th>Batch Number</th> 
+                {% if is_admin %}
+                    <th>Printed By</th>
+                {% endif %}
+                <th>Batch Number</th>
+                <th>Value</th>
             </tr>
         </thead>
         <tbody>
-            {% for job in print_jobs %}
+            {% for item in print_jobs %}
                 <tr>
-                    <td>{{ job.product_name }}</td>
-                    <td>{{ job.quantity }}</td>
-                    <td>{{ job.print_date.strftime('%d %b %Y %H:%M') }}</td> 
-                    <td>{{ job.printed_by }}</td>
-                    <td>{{ job.batch_number }}</td> 
+                    <td>{{ item.job.product.name if item.job.product else 'Product Deleted' }}</td>
+                    <td>{{ item.job.quantity }}</td>
+                    <td>{{ item.job.print_date.strftime('%d %b %Y %H:%M') }}</td>
+                    {% if is_admin %}
+                        <td>{{ item.job.user.username if item.job.user else 'User Deleted' }}</td>
+                    {% endif %}
+                    <td>{{ item.job.batch_number }}</td>
+                    <td>
+                        {% if item.job.product %}
+                            {{ "%.2f"|format(item.value) }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <div class="d-flex justify-content-center p-3"> 
+    <div class="d-flex justify-content-center p-3">
         {{ pagination.links }}
     </div>
 {% else %}

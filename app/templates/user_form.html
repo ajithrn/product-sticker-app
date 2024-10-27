@@ -1,34 +1,96 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="mb-4">{{ title }}</h1>
+
 <form method="POST" action="">
     {{ form.hidden_tag() }}
+    
     <div class="form-group">
         {{ form.username.label(class="form-label") }}
-        {{ form.username(class="form-control") }}
+        {% if form.username.errors %}
+            {{ form.username(class="form-control is-invalid") }}
+            <div class="invalid-feedback">
+                {% for error in form.username.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ form.username(class="form-control") }}
+        {% endif %}
     </div>
+
     <div class="form-group">
         {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control") }}
+        {% if form.email.errors %}
+            {{ form.email(class="form-control is-invalid") }}
+            <div class="invalid-feedback">
+                {% for error in form.email.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ form.email(class="form-control") }}
+        {% endif %}
     </div>
+
     <div class="form-group">
         {{ form.role.label(class="form-label") }}
-        {{ form.role(class="form-control") }}
+        {% if form.role.errors %}
+            {{ form.role(class="form-control is-invalid") }}
+            <div class="invalid-feedback">
+                {% for error in form.role.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ form.role(class="form-control") }}
+        {% endif %}
     </div>
+
     <div class="form-group">
         {{ form.name.label(class="form-label") }}
-        {{ form.name(class="form-control") }}
+        {% if form.name.errors %}
+            {{ form.name(class="form-control is-invalid") }}
+            <div class="invalid-feedback">
+                {% for error in form.name.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ form.name(class="form-control") }}
+        {% endif %}
     </div>
+
     <div class="form-group">
         {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control") }}
+        {% if form.password.errors %}
+            {{ form.password(class="form-control is-invalid") }}
+            <div class="invalid-feedback">
+                {% for error in form.password.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ form.password(class="form-control") }}
+        {% endif %}
     </div>
+
     <div class="form-group">
         {{ form.confirm_password.label(class="form-label") }}
-        {{ form.confirm_password(class="form-control") }}
+        {% if form.confirm_password.errors %}
+            {{ form.confirm_password(class="form-control is-invalid") }}
+            <div class="invalid-feedback">
+                {% for error in form.confirm_password.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ form.confirm_password(class="form-control") }}
+        {% endif %}
     </div>
-    <div class="form-group">
-        <input type="submit" class="btn btn-primary" value="Save">
+
+    <div class="form-group mt-4">
+        {{ form.submit(class="btn btn-primary") }}
         <a href="{{ url_for('main.user_management') }}" class="btn btn-secondary">Cancel</a>
     </div>
 </form>

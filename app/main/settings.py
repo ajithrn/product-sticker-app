@@ -1,28 +1,20 @@
 from flask import render_template, redirect, url_for, flash, request, send_file, Response, current_app
 from flask_login import login_required, current_user
-from functools import wraps
 from cryptography.fernet import Fernet, InvalidToken
 import schedule
 import base64
 import csv
 import io
 import json
+from decimal import Decimal
 
 from app import db
 from app.models import Setting, StoreInfo, Product, ProductCategory, StickerDesign
 from app.forms import StoreInfoForm
 from .backups import read_auto_backup_time, create_backup, set_auto_backup_time
 from .utils import encrypt_key, decrypt_key, generate_ingredients, generate_nutritional_facts, generate_allergen_info
+from .decorators import store_admin_required
 from . import main
-
-def store_admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role != 'store_admin':
-            flash('You do not have permission to access this page.', 'danger')
-            return redirect(url_for('main.index'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 def to_bool(value):
     return str(value).lower() in ('true', 't', 'yes', 'y', '1')
@@ -32,6 +24,12 @@ def to_float(value):
         return float(value) if value else None
     except ValueError:
         return None
+
+def to_decimal(value):
+    try:
+        return Decimal(str(value)) if value else Decimal('0.00')
+    except (ValueError, TypeError):
+        return Decimal('0.00')
 
 def to_json(value):
     if not value:
@@ -65,7 +63,6 @@ def settings():
     if settings.gpt_api_key_hash:
         try:
             decrypted_key = decrypt_key(settings.gpt_api_key_hash)
-            # Generate a masked version with the last 4 characters visible
             partial_api_key = f'{"*" * 12}{decrypted_key[-4:]}'
         except Exception as e:
             partial_api_key = 'Error decoding key'
@@ -141,7 +138,6 @@ def import_export():
 
 def export_product_and_categories():
     products = Product.query.all()
-    categories_map = {category.id: category.name for category in ProductCategory.query.all()}
     csv_output = io.StringIO()
     writer = csv.writer(csv_output)
     
@@ -149,8 +145,17 @@ def export_product_and_categories():
     writer.writerow(headers)
     
     for product in products:
-        category_name = categories_map.get(product.category_id, 'Uncategorized')
-        writer.writerow([product.name, category_name, product.rate, product.net_weight, product.shelf_life, product.ingredients, product.nutritional_facts, product.allergen_information])
+        category_name = product.category.name if product.category else 'Uncategorized'
+        writer.writerow([
+            product.name,
+            category_name,
+            str(product.rate),  # Convert Decimal to string for CSV
+            product.net_weight,
+            product.shelf_life,
+            product.ingredients,
+            product.nutritional_facts,
+            product.allergen_information
+        ])
     
     csv_output.seek(0)
     return Response(
@@ -164,39 +169,47 @@ def import_product_and_categories(data_stream, auto_generate):
     api_key = get_api_key() if auto_generate else None
 
     for row in reader:
-        category_name = row['category']
+        try:
+            category_name = row['category']
+            category = ProductCategory.query.filter_by(name=category_name).first()
+            if not category:
+                category = ProductCategory(name=category_name)
+                db.session.add(category)
+                db.session.commit()
 
-        category = ProductCategory.query.filter_by(name=category_name).first()
-        if not category:
-            category = ProductCategory(name=category_name)
-            db.session.add(category)
+            # Convert rate to Decimal
+            rate = to_decimal(row['rate'])
+            
+            product = Product(
+                name=row['name'],
+                category_id=category.id,
+                rate=rate,
+                net_weight=row['net_weight'],
+                shelf_life=int(row['shelf_life']),
+                ingredients=row.get('ingredients', ''),
+                nutritional_facts=row.get('nutritional_facts', ''),
+                allergen_information=row.get('allergen_information', '')
+            )
+            db.session.add(product)
             db.session.commit()
 
-        product = Product(
-            name=row['name'],
-            category_id=category.id,
-            rate=row['rate'],
-            net_weight=row['net_weight'],
-            shelf_life=row['shelf_life'],
-            ingredients=row.get('ingredients', ''),
-            nutritional_facts=row.get('nutritional_facts', ''),
-            allergen_information=row.get('allergen_information', '')
-        )
-        db.session.add(product)
-        db.session.commit()
+            if auto_generate and api_key:
+                if not product.ingredients:
+                    product.ingredients = generate_ingredients(product.name, api_key)
+                    db.session.commit()
 
-        if auto_generate and api_key:
-            if not product.ingredients:
-                product.ingredients = generate_ingredients(product.name, api_key)
-                db.session.commit()
+                if not product.nutritional_facts:
+                    product.nutritional_facts = generate_nutritional_facts(product.ingredients, api_key)
+                    db.session.commit()
 
-            if not product.nutritional_facts:
-                product.nutritional_facts = generate_nutritional_facts(product.ingredients, api_key)
-                db.session.commit()
+                if not product.allergen_information:
+                    product.allergen_information = generate_allergen_info(product.ingredients, api_key)
+                    db.session.commit()
 
-            if not product.allergen_information:
-                product.allergen_information = generate_allergen_info(product.ingredients, api_key)
-                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error importing product {row.get('name')}: {str(e)}")
+            flash(f"Error importing product {row.get('name')}: {str(e)}", 'danger')
 
 def export_data(model, filename, csv_headers=None):
     data = model.query.all()
@@ -209,7 +222,15 @@ def export_data(model, filename, csv_headers=None):
         writer.writerow([column.name for column in model.__mapper__.columns])
 
     for item in data:
-        writer.writerow([getattr(item, column.name) for column in model.__mapper__.columns])
+        row = []
+        for column in model.__mapper__.columns:
+            value = getattr(item, column.name)
+            if isinstance(value, Decimal):
+                value = str(value)
+            elif isinstance(value, dict):
+                value = json.dumps(value)
+            row.append(value)
+        writer.writerow(row)
 
     csv_output.seek(0)
     return Response(
@@ -221,17 +242,22 @@ def export_data(model, filename, csv_headers=None):
 def import_data(model, data_stream, mapper):
     reader = csv.DictReader(data_stream)
     for row in reader:
-        mapped_data = mapper(row)
-        existing_item = model.query.get(mapped_data.id)
+        try:
+            mapped_data = mapper(row)
+            existing_item = model.query.get(mapped_data.id)
 
-        if existing_item:
-            for key, value in mapped_data.__dict__.items():
-                if key != '_sa_instance_state':
-                    setattr(existing_item, key, value)
-        else:
-            db.session.add(mapped_data)
+            if existing_item:
+                for key, value in mapped_data.__dict__.items():
+                    if key != '_sa_instance_state':
+                        setattr(existing_item, key, value)
+            else:
+                db.session.add(mapped_data)
 
-    db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error importing data: {str(e)}")
+            flash(f"Error importing data: {str(e)}", 'danger')
 
 def sticker_design_mapper(row):
     return StickerDesign(

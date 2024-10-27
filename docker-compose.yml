@@ -7,13 +7,35 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - .:/app
-      - ./instance:/app/instance
+      - .:/app  # Mount the current directory to enable hot reload
       - backup-volume:/app/backups
     environment:
       - DOCKER_ENV=true
-      - FLASK_ENV=production
-      - FLASK_DEBUG=0
+      - FLASK_ENV=${FLASK_ENV:-development}  # Default to development if not set
+      - FLASK_APP=run.py
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/product_sticker_app
+      - SECRET_KEY=${SECRET_KEY:-default-secret-key}
+      - SUPER_ADMIN_USERNAME=${SUPER_ADMIN_USERNAME:-admin}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD:-admin_password}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-admin@example.com}
+      - TZ=Asia/Kolkata
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14
+    container_name: product_sticker_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-product_sticker_app}
+      - TZ=Asia/Kolkata
+    ports:
+      - "5432:5432"
+    command: postgres -c 'timezone=Asia/Kolkata'
 
 volumes:
   backup-volume:
+  postgres_data:

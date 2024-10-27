@@ -34,7 +34,6 @@ def multi_product_print_view():
 
     return render_template('multi_print.html', form=form, selected_products=selected_products)
 
-
 @main.route('/print/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 def print_stickers_for_product(product_id):
@@ -56,7 +55,7 @@ def print_stickers_for_product(product_id):
         stickers = [
             Sticker(
                 product_name=product.name,
-                rate=product.rate,
+                rate=str(product.rate),  # Convert Decimal to string for sticker
                 mfg_date=mfg_date,
                 exp_date=exp_date,
                 net_weight=product.net_weight,
@@ -71,10 +70,11 @@ def print_stickers_for_product(product_id):
         # Create the PDF file
         pdf_path = create_stickers_pdf(stickers)
 
+        # Create print job with proper relationships
         print_job = PrintJob(
-            product_name=product.name,
+            product_id=product.id,
+            user_id=current_user.id,
             quantity=quantity,
-            printed_by=current_user.username,
             batch_number=batch_number
         )
         db.session.add(print_job)
@@ -91,7 +91,6 @@ def print_stickers_for_product(product_id):
         form.exp_date.data = datetime.now().date() + timedelta(days=product.shelf_life)
 
     return render_template('print.html', form=form)
-
 
 @main.route('/print_stickers', methods=['POST'])
 @login_required
@@ -116,7 +115,7 @@ def print_stickers_route():
             stickers = [
                 Sticker(
                     product_name=product.name,
-                    rate=product.rate,
+                    rate=str(product.rate),  # Convert Decimal to string for sticker
                     mfg_date=mfg_date,
                     exp_date=exp_date,
                     net_weight=product.net_weight,
@@ -129,13 +128,13 @@ def print_stickers_route():
             ]
 
             # Append the generated stickers to the all_stickers list
-            all_stickers.extend(stickers) 
+            all_stickers.extend(stickers)
 
-            # Create print job entry in the database
+            # Create print job with proper relationships
             print_job = PrintJob(
-                product_name=product.name,
+                product_id=product.id,
+                user_id=current_user.id,
                 quantity=quantity,
-                printed_by=current_user.username,
                 batch_number=batch_number
             )
             db.session.add(print_job)

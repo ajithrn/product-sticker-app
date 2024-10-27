@@ -15,3 +15,4 @@ livereload
 schedule
 requests
 cryptography
+psycopg2-binary

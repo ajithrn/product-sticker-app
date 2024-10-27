@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
+from sqlalchemy.exc import IntegrityError
 from config import config
 import os
 

@@ -1,30 +1,454 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="mb-4">Analytics Dashboard</h1>
-<div class="row">
+
+<!-- Summary Cards -->
+<div class="row mb-4">
     <div class="col-md-4">
         <div class="card text-white bg-primary mb-3">
-            <div class="card-header transparent">Total Print Jobs</div>
             <div class="card-body">
-                <h5 class="card-title">{{ total_print_jobs }}</h5>
+                <h6 class="card-title">Total Print Jobs</h6>
+                <h2 class="card-text">{{ total_print_jobs }}</h2>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card text-white bg-success mb-3">
-            <div class="card-header transparent">Total Stickers Printed</div>
             <div class="card-body">
-                <h5 class="card-title">{{ total_stickers }}</h5>
+                <h6 class="card-title">Total Stickers Printed</h6>
+                <h2 class="card-text">{{ total_stickers }}</h2>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card text-white bg-info mb-3">
-            <div class="card-header transparent">Total Value of Stickers</div>
             <div class="card-body">
-                <h5 class="card-title">₹ {{ total_value }}</h5>
+                <h6 class="card-title">Total Value of Stickers</h6>
+                <h2 class="card-text">₹ {{ total_value }}</h2>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Time Period Selection -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary active" data-period="day">Day</button>
+            <button type="button" class="btn btn-primary" data-period="week">Week</button>
+            <button type="button" class="btn btn-primary" data-period="month">Month</button>
+            <button type="button" class="btn btn-primary" data-period="year">Year</button>
+            <button type="button" class="btn btn-primary" data-period="all">All Time</button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="date" class="form-control" id="startDate">
+            <span class="input-group-text">to</span>
+            <input type="date" class="form-control" id="endDate">
+            <button class="btn btn-primary" id="customDateBtn">Apply</button>
+        </div>
+    </div>
+</div>
+
+<!-- Period Summary -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <span id="summaryTitle">Daily Summary</span>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="mb-2">Stickers</div>
+                        <h3 id="periodStickers" class="text-primary">0</h3>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-2">Jobs</div>
+                        <h3 id="periodJobs" class="text-success">0</h3>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-2">Value</div>
+                        <h3 id="periodValue" class="text-info">₹ 0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Jobs Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                Print Jobs Over Time
+                <div class="spinner-border spinner-border-sm float-end d-none" role="status" id="timeSeriesSpinner">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="timeSeriesChart" style="width: 100%; height: 300px;"></canvas>
+                <div id="timeSeriesError" class="alert alert-danger d-none mt-3">
+                    Failed to load time series data. Please try again.
+                </div>
+                <div id="noTimeSeriesData" class="alert alert-info d-none mt-3">
+                    No data available for the selected time period.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Distribution Chart -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                Product Distribution
+                <div class="spinner-border spinner-border-sm float-end d-none" role="status" id="productSpinner">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="productChart" style="width: 100%; height: 400px;"></canvas>
+                <div id="productError" class="alert alert-danger d-none mt-3">
+                    Failed to load product data. Please try again.
+                </div>
+                <div id="noProductData" class="alert alert-info d-none mt-3">
+                    No product data available.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Analytics Scripts -->
+<script>
+window.addEventListener('load', function() {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js failed to load');
+        document.querySelectorAll('.card-body').forEach(body => {
+            body.innerHTML = '<div class="alert alert-danger">Failed to load Chart.js. Please refresh the page.</div>';
+        });
+        return;
+    }
+
+    let timeSeriesChart = null;
+    let productChart = null;
+
+    function showLoading() {
+        document.getElementById('timeSeriesSpinner').classList.remove('d-none');
+        document.getElementById('productSpinner').classList.remove('d-none');
+        document.getElementById('timeSeriesError').classList.add('d-none');
+        document.getElementById('productError').classList.add('d-none');
+        document.getElementById('noTimeSeriesData').classList.add('d-none');
+        document.getElementById('noProductData').classList.add('d-none');
+    }
+
+    function hideLoading() {
+        document.getElementById('timeSeriesSpinner').classList.add('d-none');
+        document.getElementById('productSpinner').classList.add('d-none');
+    }
+
+    function showError(type, error = null) {
+        const errorElement = document.getElementById(`${type}Error`);
+        errorElement.classList.remove('d-none');
+        if (error) {
+            errorElement.textContent = `Error: ${error.message}`;
+        }
+        console.error(`${type} Error:`, error);
+    }
+
+    function showNoData(type) {
+        document.getElementById(`no${type}Data`).classList.remove('d-none');
+        console.log(`No data available for ${type}`);
+    }
+
+    function getSummaryTitle(period, startDate = null, endDate = null) {
+        if (startDate && endDate) {
+            return 'Custom Range Summary';
+        }
+        
+        switch (period) {
+            case 'day':
+                return 'Daily Summary';
+            case 'week':
+                return 'Weekly Summary';
+            case 'month':
+                return 'Monthly Summary';
+            case 'year':
+                return 'Yearly Summary';
+            case 'all':
+                return 'All Time Summary';
+            default:
+                return 'Summary';
+        }
+    }
+
+    function updatePeriodTotals(totals, period = 'day', startDate = null, endDate = null) {
+        const title = getSummaryTitle(period, startDate, endDate);
+        document.getElementById('summaryTitle').textContent = title;
+        
+        document.getElementById('periodStickers').textContent = totals.stickers.toLocaleString();
+        document.getElementById('periodJobs').textContent = totals.jobs.toLocaleString();
+        document.getElementById('periodValue').textContent = `₹ ${totals.value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    function initCharts() {
+        console.log('Initializing charts...');
+        try {
+            // Time Series Chart
+            const timeSeriesCtx = document.getElementById('timeSeriesChart');
+            timeSeriesChart = new Chart(timeSeriesCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Stickers Printed',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.1,
+                        fill: true,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Print Jobs',
+                        data: [],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.1,
+                        fill: true,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Value (₹)',
+                        data: [],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.1,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.dataset.yAxisID === 'y1') {
+                                        label += '₹ ' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                    } else {
+                                        label += context.parsed.y.toLocaleString();
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹ ' + value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Product Chart
+            const productCtx = document.getElementById('productChart');
+            productChart = new Chart(productCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Stickers by Product',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgb(54, 162, 235)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const product = context.chart.data.labels[context.dataIndex];
+                                    const quantity = context.raw;
+                                    const value = context.dataset.values[context.dataIndex];
+                                    return [
+                                        `Quantity: ${quantity.toLocaleString()}`,
+                                        `Value: ₹ ${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Charts initialized successfully');
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+            showError('timeSeries', error);
+            showError('product', error);
+        }
+    }
+
+    function updateCharts(period = 'day', startDate = null, endDate = null) {
+        console.log('Updating charts for period:', period);
+        showLoading();
+        
+        let url = `/analytics/data?period=${period}`;
+        if (startDate && endDate) {
+            url += `&start_date=${startDate}&end_date=${endDate}`;
+        }
+        
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load data');
+                }
+                
+                // Update period totals with period label
+                updatePeriodTotals(data.period_totals, period, startDate, endDate);
+                
+                // Update Time Series Chart
+                if (data.time_series && data.time_series.length > 0) {
+                    const timeLabels = data.time_series.map(item => item.date);
+                    const quantityData = data.time_series.map(item => item.quantity);
+                    const jobsData = data.time_series.map(item => item.jobs);
+                    const valueData = data.time_series.map(item => item.value);
+                    
+                    timeSeriesChart.data.labels = timeLabels;
+                    timeSeriesChart.data.datasets[0].data = quantityData;
+                    timeSeriesChart.data.datasets[1].data = jobsData;
+                    timeSeriesChart.data.datasets[2].data = valueData;
+                    timeSeriesChart.update();
+                    console.log('Time series chart updated');
+                } else {
+                    showNoData('TimeSeries');
+                }
+
+                // Update Product Chart
+                if (data.product_stats && data.product_stats.length > 0) {
+                    const productLabels = data.product_stats.map(item => item.product);
+                    const productData = data.product_stats.map(item => item.quantity);
+                    const valueData = data.product_stats.map(item => item.value);
+                    
+                    productChart.data.labels = productLabels;
+                    productChart.data.datasets[0].data = productData;
+                    productChart.data.datasets[0].values = valueData;  // Store values for tooltip
+                    productChart.update();
+                    console.log('Product chart updated');
+                } else {
+                    showNoData('Product');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                showError('timeSeries', error);
+                showError('product', error);
+            })
+            .finally(() => {
+                hideLoading();
+            });
+    }
+
+    // Initialize charts and load initial data
+    initCharts();
+    updateCharts('day');
+
+    // Period selection buttons
+    document.querySelectorAll('[data-period]').forEach(button => {
+        button.addEventListener('click', function() {
+            console.log('Period button clicked:', this.dataset.period);
+            // Remove active class from all buttons
+            document.querySelectorAll('[data-period]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Add active class to clicked button
+            this.classList.add('active');
+            // Update charts
+            updateCharts(this.dataset.period);
+        });
+    });
+
+    // Custom date range
+    document.getElementById('customDateBtn').addEventListener('click', function() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (startDate && endDate) {
+            // Remove active class from period buttons
+            document.querySelectorAll('[data-period]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            updateCharts('custom', startDate, endDate);
+        }
+    });
+});
+</script>
 {% endblock %}
